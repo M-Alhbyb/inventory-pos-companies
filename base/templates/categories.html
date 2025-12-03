@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}إدارة الفئات{% endblock %}
+{% block page_title %}إدارة الفئات{% endblock %}
+{% block page_subtitle %}إدارة الفئات الخاصة بك{% endblock %}
+
+{% block content %}
+<!-- Categories Table -->
+<div class="bg-white rounded-xl shadow-md border border-slate-200 p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-bold text-slate-800">الفئات</h2>
+
+
+        <!-- Search Form -->
+        <form method="GET" class="relative flex items-center justify-center gap-2">
+            <input 
+                type="text" 
+                name="q" 
+                value="{{ request.GET.q|default:'' }}"
+                placeholder="بحث في الفئات..." 
+                class="pl-4 pr-10 py-2 rounded-lg border border-slate-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none w-64 transition-all text-right block height-full"
+            >
+            <div class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary-600">
+                <i class="fas fa-search"></i>
+            </div>
+            <button type="submit" class="ml-4 px-4 py-2 rounded-lg  text-right bg-primary-600 text-white block height-full">
+                البحث
+            </button>
+        </form>
+        <button onclick="AddModalFunction()" class="flex items-center gap-2 justify-between p-2 rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:from-primary-600 hover:to-primary-700 transition-all shadow-md hover:shadow-lg">
+            إضافة فئة
+            <i class="fas fa-plus"></i>
+        </button>
+
+    </div>
+    
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr class="border-b border-slate-200">
+                    <th class="text-right bold py-3 px-4 text-sm font-semibold text-slate-600">الفئة</th>
+                    <th class="text-right bold py-3 px-4 text-sm font-semibold text-slate-600">الوصف</th>
+                    <th class="text-center bold py-3 px-4 text-sm font-semibold text-slate-600">الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for category in categories %}
+                <tr class="border-b border-slate-100 hover:bg-slate-50 transition-all">
+                    <td class="py-4 px-4">
+                        <div class="flex items-center space-x-3 space-x-reverse">
+                            <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
+                                <i class="fas fa-layer-group text-white"></i>
+                            </div>
+                            <span class="font-medium text-slate-800 category-name-{{category.id}}">{{ category.name }}</span>
+                        </div>
+                    </td>
+                    <td class="py-4 px-4 text-sm text-slate-600 category-description-{{category.id}}">{{ category.description|truncatewords:10 }}</td>
+                    <td class="py-4 px-4 flex items-center justify-center gap-2">
+                        <button onclick="EditModalFunction({{ category.id }})" class="openEditCategoryModal flex items-center text-sm gap-2 justify-between p-2 rounded-lg bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 transition-all shadow-md hover:shadow-lg">
+                            تعديل
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="DeleteModalFunction({{ category.id }})" class="openDeleteCategoryModal flex items-center text-sm gap-2 justify-between p-2 rounded-lg bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 transition-all shadow-md hover:shadow-lg">
+                            حذف
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+{% if request.GET.q %}
+<tr>
+<td colspan="3" class="py-8 text-center text-slate-500">
+<i class="fas fa-inbox text-4xl mb-3 block"></i>
+لا توجد نتائج لهذا البحث
+<form method='GET' class="flex items-center justify-center gap-2 mt-4">
+<button type='submit' class="flex items-center text-sm gap-2 justify-between p-2 rounded-lg bg-gradient-to-r from-gray-500 to-gray-600 text-white hover:from-gray-600 hover:to-gray-700 transition-all shadow-md hover:shadow-lg">
+إلغاء البحث
+</button>
+</form>
+</td>
+</tr>
+{% else %}
+<tr>
+<td colspan="3" class="py-8 text-center text-slate-500">
+<i class="fas fa-inbox text-4xl mb-3 block"></i>
+لا توجد فئات حالياً. قم بإضافة فئة جديدة للبدء.
+</td>
+</tr>
+{% endif %}
+{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% include 'partials/categories-modals.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/categories.js' %}"></script>
+{% endblock %}

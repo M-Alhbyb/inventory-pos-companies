@@ -1,0 +1,457 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Breadcrumbs & Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+            <div class="flex items-center gap-2 text-sm text-slate-500 mb-2">
+                <a href="{% url 'base:dashboard' %}" class="hover:text-primary-600 transition-colors">الرئيسية</a>
+                <i class="fas fa-chevron-left text-xs"></i>
+                {% if partner.user_type == 'merchant' %} 
+                <a href="{% url 'base:merchants' %}" class="hover:text-primary-600 transition-colors">التجار</a>
+                {% elif partner.user_type == 'representative' %}
+                <a href="{% url 'base:representatives' %}" class="hover:text-primary-600 transition-colors">المندوبين</a>
+                {% endif %}
+                <i class="fas fa-chevron-left text-xs"></i>
+                <span class="text-slate-800 font-medium">{{ partner.get_full_name }}</span>
+            </div>
+            <h1 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600">
+                    <i class="fas fa-user-tie text-xl"></i>
+                </div>
+                {{ partner.get_full_name }}
+            </h1>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            {% if partner.user_type == 'merchant' %} 
+            <a href="{% url 'base:merchants' %}" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all flex items-center gap-2">
+                <i class="fas fa-arrow-right"></i>
+                عودة للقائمة
+            </a>
+            {% elif partner.user_type == 'representative' %}
+            <a href="{% url 'base:representatives' %}" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all flex items-center gap-2">
+                <i class="fas fa-arrow-right"></i>
+                عودة للقائمة
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Merchant Info Card -->
+        <div class="lg:col-span-1 space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-gradient-to-r from-slate-800 to-slate-900 px-6 py-8 text-center">
+                    <div class="w-24 h-24 bg-white rounded-full mx-auto mb-4 flex items-center justify-center text-4xl text-slate-300 border-4 border-white/10">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-white mb-1">{{ partner.get_full_name }}</h2>
+                    <p class="text-slate-400 text-sm">@{{ partner.username }}</p>
+                </div>
+                
+                <div class="p-6 space-y-4">
+                    <div class="flex items-center gap-4 p-3 rounded-lg bg-slate-50">
+                        <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-500 shadow-sm">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 mb-0.5">البريد الإلكتروني</p>
+                            <p class="text-sm font-medium text-slate-800">{{ merchant.email|default:"غير متوفر" }}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4 p-3 rounded-lg bg-slate-50">
+                        <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-500 shadow-sm">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 mb-0.5">رقم الهاتف</p>
+                            <p class="text-sm font-medium text-slate-800">{{ partner.phone|default:"غير متوفر" }}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4 p-3 rounded-lg bg-slate-50">
+                        <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-500 shadow-sm">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 mb-0.5">العنوان</p>
+                            <p class="text-sm font-medium text-slate-800">{{ partner.address|default:"غير متوفر" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% if partner.user_type != 'merchant' %}
+            <!-- Financial Stats -->
+            <div class="grid  gap-4">
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-600">
+                            <i class="fas fa-arrow-down"></i>
+                        </div>
+                        <span class="text-sm text-slate-500 font-medium">
+                            {% if partner.user_type == 'merchant' %}
+                            الديون
+                            {% elif partner.user_type == 'representative' %}
+                            عدد المنتجات المأخوذة
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class>
+                        {% if partner.user_type == 'merchant' %}
+                        <p class="text-xl font-bold text-red-600">{{ partner.debt }}</p>
+                        <p class="text-xs text-slate-400 mt-1">جنيه سوداني</p>
+                        {% elif partner.user_type == 'representative' %}
+                        <p class="text-xl font-bold text-red-600">{{ partner.products_count }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+        </div>
+
+        <div class="lg:col-span-2 flex flex-col gap-4">
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <i class="fas fa-bolt text-primary-500"></i>
+                إجراءات سريعة
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button onclick="openGiveProductModal()" class="px-6 py-4 rounded-lg bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-3">
+                    <i class="fas fa-box text-xl"></i>
+                    {% if partner.user_type == 'merchant' %}
+                        <span class="font-medium">إعطاء منتجات للتاجر</span>
+                    {% elif partner.user_type == 'representative' %}
+                        <span class="font-medium">إعطاء منتجات للمندوب</span>
+                    {% endif %}
+                </button>
+                {% if partner.user_type == 'merchant' %}
+                <button onclick="openTakePaymentModal()" class="px-6 py-4 rounded-lg bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-3">
+                    <i class="fas fa-money-bill-wave text-xl"></i>
+                    <span class="font-medium">سداد</span>
+                </button>
+                {% elif partner.user_type == 'representative' %}
+                <button onclick="openRestoreProductModal()" class="px-6 py-4 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-3">
+                    <i class="fas fa-undo text-xl"></i>
+                    <span class="font-medium">إرجاع منتجات</span>
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        <!-- Merchant Transactions -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200">
+                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fas fa-box text-primary-500"></i>
+                
+                        {% if partner.user_type == 'merchant' %}
+                        معاملات التاجر
+                        {% elif partner.user_type == 'representative' %}
+                        معاملات المندوب
+                        {% endif %}
+                        <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs">{{ merchant_transactions.count }}</span>
+                    </h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-slate-50 border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-4 text-center text-xs font-semibold text-slate-600">رقم المعاملة</th>
+                                <th class="px-6 py-4 text-right text-xs font-semibold text-slate-600">التاريخ</th>
+                                <th class="px-6 py-4 text-right text-xs font-semibold text-slate-600">النوع</th>
+                                <th class="px-6 py-4 text-right text-xs font-semibold text-slate-600">المبلغ الكلي</th>
+                                <th class="px-6 py-4 text-right text-xs font-semibold text-slate-600"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            {% for transaction in partner_transactions %}
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4">
+                                    <div class="w-5 h-5 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
+                                        <p class="text-xs text-slate-500">{{ transaction.id }}</p>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="px-0 py-0 text-blue-600 text-xs font-medium flex items-center justify-start">
+                                        {{ transaction.date|date:"Y-m-d" }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div>
+                                            <p class="text-sm font-medium text-slate-800 
+                                            {% if transaction.type == 'take' %}
+                                            bg-red-300
+                                            {% elif transaction.type == 'payment' %}
+                                            bg-green-300
+                                            {% elif transaction.type == 'restore' %}
+                                            bg-orange-300
+                                            {% else %}
+                                            bg-gray-300
+                                            {% endif %}
+                                            text-white px-2 py-1 rounded-full">{{ transaction.get_type_display }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="px-0 py-0 text-blue-600 text-xs font-medium flex items-center justify-start">
+                                        {{ transaction.amount }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" onclick="toggleDetails({{ transaction.id }})" class="px-3 py-1.5 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors flex items-center justify-center gap-2 text-xs">
+                                            <i class="fas fa-eye"></i>
+                                            التفاصيل
+                                        </button>
+                                        <button type="button" onclick="openDeleteTransactionModal({{ transaction.id }}, '{{ transaction.get_type_display }}')" class="px-3 py-1.5 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors flex items-center justify-center gap-2 text-xs">
+                                            <i class="fas fa-trash"></i>
+                                            حذف
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <!-- Transaction Details Dropdown -->
+                            <tr id="details-{{ transaction.id }}" class="hidden bg-slate-50">
+                                <td colspan="5" class="px-6 py-4">
+                                    <div class="bg-white rounded-lg border border-slate-200 p-4">
+                                        <h4 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                                            <i class="fas fa-list text-primary-500"></i>
+                                            تفاصيل المعاملة
+                                        </h4>
+                                        {% if transaction.items.all %}
+                                        <div class="overflow-x-auto">
+                                            <table class="w-full">
+                                                <thead class="bg-slate-100 border-b border-slate-200">
+                                                    <tr>
+                                                        <th class="px-4 py-2 text-right text-xs font-semibold text-slate-600">المنتج</th>
+                                                        <th class="px-4 py-2 text-right text-xs font-semibold text-slate-600">الكمية</th>
+                                                        <th class="px-4 py-2 text-right text-xs font-semibold text-slate-600">السعر</th>
+                                                        <th class="px-4 py-2 text-right text-xs font-semibold text-slate-600">الإجمالي</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-slate-100">
+                                                    {% for item in transaction.items.all %}
+                                                    <tr class="hover:bg-slate-50 transition-colors">
+                                                        <td class="px-4 py-2 text-sm text-slate-800">{{ item.product.name }}</td>
+                                                        <td class="px-4 py-2 text-sm text-slate-600">{{ item.quantity }}</td>
+                                                        <td class="px-4 py-2 text-sm text-slate-600">{{ item.price }} ج.س</td>
+                                                        <td class="px-4 py-2 text-sm font-semibold text-slate-800">{{ item.total }} ج.س</td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        {% else %}
+                                        <p class="text-sm text-slate-500 text-center py-4">لا توجد تفاصيل لهذه المعاملة</p>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="px-6 py-12 text-center text-slate-500">
+                                    <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <i class="fas fa-box-open text-2xl text-slate-300"></i>
+                                    </div>
+                                    {% if partner.user_type == 'merchant' %} 
+                                    <p>لا توجد دفعات مرتبطة بهذا التاجر</p>
+                                    {% elif partner.user_type == 'representative' %}
+                                    <p>لا توجد دفعات مرتبطة بهذا المندوب</p>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Take Product Modal -->
+<div id="giveProductModal" class="fixed inset-0 hidden bg-black bg-opacity-50 z-50 items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full transform transition-all max-h-[90vh] overflow-y-auto">
+        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-t-2xl px-6 py-4 flex items-center justify-between sticky top-0">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-box"></i>
+                {% if partner.user_type == 'merchant' %} 
+                إعطاء منتجات للتاجر
+                {% elif partner.user_type == 'representative' %}
+                إعطاء منتجات للمندوب
+                {% endif %}
+            </h3>
+            <button onclick="closeGiveProductModal()" class="text-white hover:text-slate-200 transition-all">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <form method="post" class="p-6">
+            <input type="hidden" name="transaction_type" value="take">
+            {% csrf_token %}
+            <div id="modal-products-fields" class="flex flex-col gap-4 mb-4">
+                <div class="flex items-center flex-col gap-2">
+                    <select name="product" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-all text-right">
+                        <option value="skip">اختر منتج</option>
+                        {% for product in products %}
+                            <option value="{{ product.id }}" data-stock="{{ product.stock }}">{{ product.name }} - (متوفر: {{ product.stock }})</option>
+                        {% endfor %}
+                    </select>
+                    <input type="number" name="quantity" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-all text-right" placeholder="الكمية" min="1" required>
+                </div>
+            </div>
+            
+            <div class="flex flex-col gap-3">
+                <button type="button" onclick="addProductFieldModal({{ products_list }})" class="px-5 py-2.5 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2 text-sm w-full">
+                    <i class="fas fa-plus"></i>
+                    أضف منتج آخر
+                </button>
+                
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeGiveProductModal()" class="px-6 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all font-medium">
+                        إلغاء
+                    </button>
+                    <button type="submit" class="px-6 py-2.5 rounded-lg bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 transition-all shadow-md hover:shadow-lg font-medium">
+                        <i class="fas fa-save ml-2"></i>
+                        حفظ العملية
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- Restore Product Modal -->
+<div id="restoreProductModal" class="fixed inset-0 hidden bg-black bg-opacity-50 z-50 items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full transform transition-all max-h-[90vh] overflow-y-auto">
+        <div class="bg-gradient-to-r from-orange-500 to-orange-600 rounded-t-2xl px-6 py-4 flex items-center justify-between sticky top-0">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-undo"></i>
+                إرجاع منتجات
+            </h3>
+            <button onclick="closeRestoreProductModal()" class="text-white hover:text-slate-200 transition-all">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <form method="post" class="p-6">
+            {% csrf_token %}
+            <input type="hidden" name="transaction_type" value="restore">
+            <div id="modal-products-fields-restore" class="flex flex-col gap-4 mb-4">
+                <div class="flex items-center flex-col gap-2">
+                    <select name="product" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition-all text-right">
+                        <option value="skip">اختر منتج</option>
+                        {% for product in products %}
+                            <option value="{{ product.id }}">{{ product.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="number" name="quantity" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition-all text-right" placeholder="الكمية" min="1" required>
+                </div>
+            </div>
+            
+            <div class="flex flex-col gap-3">
+                <button type="button" onclick="addProductFieldModalRestore({{ products_list }})" class="px-5 py-2.5 rounded-lg bg-orange-600 text-white font-medium hover:bg-orange-700 transition-colors flex items-center justify-center gap-2 text-sm w-full">
+                    <i class="fas fa-plus"></i>
+                    أضف منتج آخر
+                </button>
+                
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeRestoreProductModal()" class="px-6 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all font-medium">
+                        إلغاء
+                    </button>
+                    <button type="submit" class="px-6 py-2.5 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 transition-all shadow-md hover:shadow-lg font-medium">
+                        <i class="fas fa-save ml-2"></i>
+                        حفظ العملية
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- Payment Modal -->
+<div id="takePaymentModal" class="fixed inset-0 hidden bg-black bg-opacity-50 z-50 items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all">
+        <div class="bg-gradient-to-r from-red-500 to-red-600 rounded-t-2xl px-6 py-4 flex items-center justify-between">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-money-bill-wave"></i>
+                سداد
+            </h3>
+            <button onclick="closeTakePaymentModal()" class="text-white hover:text-slate-200 transition-all">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <form method="post" class="p-6">
+            <input type="hidden" name="transaction_type" value="payment">
+            {% csrf_token %}
+            <div class="mb-6">
+                <label for="payment-amount" class="block text-sm font-semibold text-slate-700 mb-2">
+                    المبلغ <span class="text-red-500">*</span>
+                </label>
+                <input type="number" name="amount" id="payment-amount" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition-all text-right" placeholder="أدخل المبلغ" min="1" step="0.01" required>
+            </div>
+            
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <button type="button" onclick="closeTakePaymentModal()" class="px-6 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all font-medium">
+                    إلغاء
+                </button>
+                <button type="submit" class="px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 transition-all shadow-md hover:shadow-lg font-medium">
+                    <i class="fas fa-check ml-2"></i>
+                    تأكيد السداد
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Transaction Modal -->
+<div id="deleteTransactionModal" class="fixed inset-0 hidden bg-black bg-opacity-50 z-50 items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all">
+        <div class="bg-gradient-to-r from-red-500 to-red-600 rounded-t-2xl px-6 py-4 flex items-center justify-between">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-trash-alt"></i>
+                حذف معاملة
+            </h3>
+            <button onclick="closeDeleteTransactionModal()" class="text-white hover:text-slate-200 transition-all">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <form id="deleteTransactionForm" method="post" class="p-6">
+            {% csrf_token %}
+            <input type="hidden" id="deleteTransactionId" name="transaction_id">
+            
+            <div class="mb-4 text-center">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-exclamation-triangle text-2xl text-red-600"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 mb-2">هل أنت متأكد من حذف هذه المعاملة؟</h3>
+                <p class="text-slate-600">سيتم حذف معاملة <span id="deleteTransactionType" class="font-bold text-slate-800"></span> وإرجاع جميع التغييرات المرتبطة بها (المخزون والديون). هذا الإجراء لا يمكن التراجع عنه.</p>
+            </div>
+
+            <div id="deleteErrorMessage" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"></div>
+
+            <div class="flex items-center justify-center gap-3 mt-6">
+                <button type="button" onclick="closeDeleteTransactionModal()" class="px-6 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all font-medium w-full">
+                    إلغاء
+                </button>
+                <button type="submit" class="px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 transition-all shadow-md hover:shadow-lg font-medium w-full">
+                    <i class="fas fa-trash-alt ml-2"></i>
+                    حذف
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="{% static 'js/partners.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,163 @@
+
+{% load static %}
+<!-- Add Partner Modal -->
+<div id="addPartnerModal" class="fixed inset-0 hidden bg-black bg-opacity-50 z-50 items-center justify-center p-4">
+    <div id="modalContent" class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full transform transition-all max-h-[90vh] overflow-y-auto">
+        <!-- Modal Header -->
+        <div class="bg-gradient-to-r from-primary-500 to-primary-600 rounded-t-2xl px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-user-plus"></i>
+                إضافة تاجر جديد
+            </h3>
+            <button id="closeAddPartnerModal" class="text-white hover:text-slate-200 transition-all">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <form id="addPartnerForm" method="POST" action=
+        "{% url 'base:add_partner' partner_type %}"
+         class="p-6">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- User Fields -->
+                {% for field in user_form %}
+                <div class="
+                mb-4
+                {% if field.name == 'user_type' %}
+                hidden
+                {% endif %}
+                ">
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-slate-700 mb-2">
+                        {{ field.label }} {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    {{ field }}
+                    {% if field.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ field.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Error Message -->
+            <div id="addErrorMessage" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"></div>
+
+            <!-- Modal Footer -->
+            <div class="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-slate-100">
+                <button type="button" id="cancelAddPartner"
+                    class="px-6 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all font-medium">
+                    إلغاء
+                </button>
+                <button type="submit"
+                    class="px-6 py-2.5 rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:from-primary-600 hover:to-primary-700 transition-all shadow-md hover:shadow-lg font-medium">
+                    <i class="fas fa-save ml-2"></i>
+                    حفظ
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Partner Modal -->
+<div id="editPartnerModal" class="fixed inset-0 hidden bg-black bg-opacity-50 z-50 items-center justify-center p-4">
+    <div id="editModalContent" class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full transform transition-all max-h-[90vh] overflow-y-auto">
+        <!-- Modal Header -->
+        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-t-2xl px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-user-edit"></i>
+                تعديل بيانات التاجر
+            </h3>
+            <button id="closeEditPartnerModal" class="text-white hover:text-slate-200 transition-all">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <form id="editPartnerForm" method="POST" class="p-6">
+            {% csrf_token %}
+            <input type="hidden" id="editPartnerId" name="partner_id">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- User Fields -->            
+                {% for field in edit_user_form %}
+                <div class="
+                mb-4
+                {% if field.name == 'user_type' %}
+                hidden
+                {% endif %}
+                ">
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-slate-700 mb-2">
+                        {{ field.label }} {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    {{ field }}
+                    {% if field.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ field.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Error Message -->
+            <div id="editErrorMessage" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"></div>
+
+            <!-- Modal Footer -->
+            <div class="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-slate-100">
+                <button type="button" id="cancelEditPartner"
+                    class="px-6 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all font-medium">
+                    إلغاء
+                </button>
+                <button type="submit"
+                    class="px-6 py-2.5 rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:from-primary-600 hover:to-primary-700 transition-all shadow-md hover:shadow-lg font-medium">
+                    <i class="fas fa-save ml-2"></i>
+                    حفظ
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Partner Modal -->
+<div id="deletePartnerModal" class="fixed inset-0 hidden bg-black bg-opacity-50 z-50 items-center justify-center p-4">
+    <div id="deleteModalContent" class="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all">
+        <!-- Modal Header -->
+        <div class="bg-gradient-to-r from-red-500 to-red-600 rounded-t-2xl px-6 py-4 flex items-center justify-between">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-trash-alt"></i>
+                حذف تاجر
+            </h3>
+            <button id="closeDeletePartnerModal" class="text-white hover:text-slate-200 transition-all">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <form id="deletePartnerForm" method="POST" class="p-6">
+            {% csrf_token %}
+            
+            <div class="mb-4 text-center">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-exclamation-triangle text-2xl text-red-600"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 mb-2">هل أنت متأكد من حذف هذا التاجر؟</h3>
+                <p class="text-slate-600">سيتم حذف حساب التاجر <span id="deletePartnerName" class="font-bold text-slate-800"></span> وجميع البيانات المرتبطة به. هذا الإجراء لا يمكن التراجع عنه.</p>
+            </div>
+
+            <!-- Error Message -->
+            <div id="deleteErrorMessage" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"></div>
+
+            <!-- Modal Footer -->
+            <div class="flex items-center justify-center gap-3 mt-6">
+                <button type="button" id="cancelDeletePartner"
+                    class="px-6 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all font-medium w-full">
+                    إلغاء
+                </button>
+                <button type="submit"
+                    class="px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 transition-all shadow-md hover:shadow-lg font-medium w-full">
+                    <i class="fas fa-trash-alt ml-2"></i>
+                    حذف
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
