@@ -19,7 +19,7 @@
 ## 🎬 Demo
 
 <!-- VIDEO_PLACEHOLDER: Add your demo video URL here -->
-![Demo Video](https://github.com/M-Alhbyb/Django_Inventory_System/blob/master/demo/demo.mp4)
+![Demo Video](https://github.com/M-Alhbyb/Django_Inventory_System/blob/master/demo/demo.gif)
 
 ---
 
