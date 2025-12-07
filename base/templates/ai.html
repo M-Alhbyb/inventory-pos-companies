@@ -15,51 +15,6 @@
     </button>
 </div>
 
-<!-- Progress Modal Overlay -->
-<div id="progress-modal" class="fixed inset-0 z-50 hidden">
-    <!-- Backdrop -->
-    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
-    
-    <!-- Modal Content -->
-    <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 transform transition-all">
-            <!-- Header -->
-            <div class="text-center mb-6">
-                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center">
-                    <i id="modal-icon" class="fas fa-brain text-white text-2xl animate-pulse"></i>
-                </div>
-                <h3 class="text-xl font-bold text-slate-800">جاري تحليل البيانات</h3>
-                <p id="status-message" class="text-sm text-slate-500 mt-1">يتم الآن حساب التوقعات...</p>
-            </div>
-            
-            <!-- Progress Bar -->
-            <div class="mb-4">
-                <div class="flex justify-between text-sm font-medium text-slate-600 mb-2">
-                    <span>التقدم</span>
-                    <span id="progress-text">0%</span>
-                </div>
-                <div class="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
-                    <div id="progress-bar" class="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
-                </div>
-            </div>
-            
-            <!-- Status Indicator -->
-            <div id="status-indicator" class="flex items-center justify-center gap-2 text-sm text-slate-500">
-                <div class="flex gap-1">
-                    <span class="w-2 h-2 bg-teal-500 rounded-full animate-bounce" style="animation-delay: 0ms"></span>
-                    <span class="w-2 h-2 bg-teal-500 rounded-full animate-bounce" style="animation-delay: 150ms"></span>
-                    <span class="w-2 h-2 bg-teal-500 rounded-full animate-bounce" style="animation-delay: 300ms"></span>
-                </div>
-                <span>جاري المعالجة</span>
-            </div>
-            
-            <!-- Success/Failure Message (hidden by default) -->
-            <div id="completion-message" class="hidden text-center mt-4">
-                <p id="completion-text" class="font-medium"></p>
-            </div>
-        </div>
-    </div>
-</div>
 <div class="bg-white rounded-xl shadow-md border border-slate-200 p-6">
     
     <div class="flex items-center justify-between mb-6">
@@ -147,95 +102,35 @@
 
     </div>
 
-    {% if page_obj.has_other_pages %}
-    <!-- Mobile view -->
-    <div class="flex flex-1 justify-between sm:hidden">
-        {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">السابق</a>
-        {% else %}
-            <span class="relative inline-flex items-center rounded-md border border-slate-300 bg-slate-100 px-4 py-2 text-sm font-medium text-slate-400 cursor-not-allowed">السابق</span>
-        {% endif %}
-        
-        {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}" class="relative ml-3 inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">التالي</a>
-        {% else %}
-            <span class="relative ml-3 inline-flex items-center rounded-md border border-slate-300 bg-slate-100 px-4 py-2 text-sm font-medium text-slate-400 cursor-not-allowed">التالي</span>
-        {% endif %}
-    </div>
-
-    <!-- Desktop view -->
-    <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-        <div>
-            
-        </div>
-        <div>
-            <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                <!-- Previous Page -->
-                {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center rounded-r-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus:z-20 focus:outline-offset-0">
-                        <span class="sr-only">السابق</span>
-                        <i class="fas fa-chevron-right h-5 w-5"></i>
-                    </a>
-                {% else %}
-                    <span class="relative inline-flex items-center rounded-r-md px-2 py-2 text-slate-300 ring-1 ring-inset ring-slate-300 cursor-not-allowed">
-                        <span class="sr-only">السابق</span>
-                        <i class="fas fa-chevron-right h-5 w-5"></i>
-                    </span>
-                {% endif %}
-
-                <!-- Page Numbers -->
-                {% for i in page_obj.paginator.page_range %}
-                    {% if page_obj.number == i %}
-                        <span aria-current="page" class="relative z-10 inline-flex items-center bg-teal-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">{{ i }}</span>
-                    {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
-                        <a href="?page={{ i }}" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus:z-20 focus:outline-offset-0">{{ i }}</a>
-                    {% endif %}
-                {% endfor %}
-
-                <!-- Next Page -->
-                {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}" class="relative inline-flex items-center rounded-l-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus:z-20 focus:outline-offset-0">
-                        <span class="sr-only">التالي</span>
-                        <i class="fas fa-chevron-left h-5 w-5"></i>
-                    </a>
-                {% else %}
-                    <span class="relative inline-flex items-center rounded-l-md px-2 py-2 text-slate-300 ring-1 ring-inset ring-slate-300 cursor-not-allowed">
-                        <span class="sr-only">التالي</span>
-                        <i class="fas fa-chevron-left h-5 w-5"></i>
-                    </span>
-                {% endif %}
-            </nav>
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="hidden py-8 text-center">
+        <div class="inline-flex items-center gap-3 px-6 py-3 bg-slate-100 rounded-full">
+            <div class="w-5 h-5 border-2 border-slate-300 border-t-teal-500 rounded-full animate-spin"></div>
+            <span class="text-slate-600 font-medium">جاري تحميل المزيد...</span>
         </div>
     </div>
-    {% endif %}
+    
+    <!-- End of List Message -->
+    <div id="end-of-list" class="hidden py-6 text-center">
+        <span class="text-slate-400 text-sm">تم عرض جميع التوقعات</span>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'base/js/infinite-scroll.js' %}"></script>
 <script>
+    // ==================== Start Process Logic ====================
     const startButton = document.getElementById('start-button');
-    const progressModal = document.getElementById('progress-modal');
-    const progressBar = document.getElementById('progress-bar');
-    const progressText = document.getElementById('progress-text');
-    const statusMessage = document.getElementById('status-message');
-    const statusIndicator = document.getElementById('status-indicator');
-    const completionMessage = document.getElementById('completion-message');
-    const completionText = document.getElementById('completion-text');
-    const modalIcon = document.getElementById('modal-icon');
+    
+    // Check if a task is already running
+    if (AIProgressManager.state.isActive) {
+        startButton.disabled = true;
+    }
 
     startButton.addEventListener('click', function() {
-        // Show the modal
-        progressModal.classList.remove('hidden');
         startButton.disabled = true;
         
-        // Reset modal state
-        progressBar.style.width = '0%';
-        progressText.textContent = '0%';
-        statusMessage.textContent = 'يتم الآن حساب التوقعات...';
-        statusIndicator.classList.remove('hidden');
-        completionMessage.classList.add('hidden');
-        modalIcon.className = 'fas fa-brain text-white text-2xl animate-pulse';
-
         // Start the process and get the task ID
         fetch('/ai/refresh/', { 
             method: 'POST',
@@ -247,70 +142,83 @@
         .then(response => response.json())
         .then(data => {
             const taskId = data.task_id;
-            // Start polling the status
-            pollStatus(taskId);
+            // Delegate to global manager
+            AIProgressManager.start(taskId);
         })
         .catch(error => {
-            showError('حدث خطأ أثناء بدء العملية');
+            startButton.disabled = false;
             console.error('Error:', error);
+            // Use global manager to show error
+            AIProgressManager.handleError('حدث خطأ أثناء بدء العملية');
         });
     });
 
-    function pollStatus(taskId) {
-        const intervalId = setInterval(function() {
-            fetch(`/status/${taskId}/`) 
-                .then(response => response.json())
-                .then(data => {
-                    const progress = data.progress;
-                    
-                    // Update the bar visually
-                    progressBar.style.width = `${progress}%`;
-                    progressText.textContent = `${progress}%`;
-                    
-                    // Check if the process is finished
-                    if (data.state === 'SUCCESS') {
-                        clearInterval(intervalId);
-                        showSuccess();
-                    } else if (data.state === 'FAILURE') {
-                        clearInterval(intervalId);
-                        showError('فشل في تحديث التوقعات');
-                    }
-                })
-                .catch(error => {
-                    clearInterval(intervalId);
-                    showError('حدث خطأ أثناء التحقق من الحالة');
-                    console.error('Error:', error);
-                });
-        }, 1500); // Poll every 1.5 seconds
-    }
-
-    function showSuccess() {
-        statusIndicator.classList.add('hidden');
-        completionMessage.classList.remove('hidden');
-        completionText.textContent = 'تم تحديث التوقعات بنجاح!';
-        completionText.className = 'font-medium text-emerald-600';
-        modalIcon.className = 'fas fa-check text-white text-2xl';
-        statusMessage.textContent = 'سيتم تحديث الصفحة الآن...';
-        
-        // Refresh the page after a short delay
-        setTimeout(() => {
-            window.location.reload();
-        }, 1500);
-    }
-
-    function showError(message) {
-        statusIndicator.classList.add('hidden');
-        completionMessage.classList.remove('hidden');
-        completionText.textContent = message;
-        completionText.className = 'font-medium text-red-600';
-        modalIcon.className = 'fas fa-times text-white text-2xl';
-        statusMessage.textContent = 'يرجى المحاولة مرة أخرى';
-        startButton.disabled = false;
-        
-        // Hide modal after delay
-        setTimeout(() => {
-            progressModal.classList.add('hidden');
-        }, 3000);
-    }
+    // ==================== Infinite Scroll ====================
+    const aiScroll = new InfiniteScroll({
+        nextPage: {% if page_obj.has_next %}{{ page_obj.next_page_number }}{% else %}null{% endif %},
+        hasNext: {% if page_obj.has_next %}true{% else %}false{% endif %},
+        containerSelector: 'tbody.divide-y',
+        createRowHtml: function(item) {
+            // Determine status based on days until stock out
+            let statusHtml = '';
+            let daysClass = '';
+            
+            if (item.days_until_stock_out < 7) {
+                daysClass = 'text-red-600';
+                statusHtml = `
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-200">
+                        <i class="fas fa-exclamation-circle"></i>
+                        حرج جداً
+                    </span>
+                `;
+            } else if (item.days_until_stock_out < 30) {
+                daysClass = 'text-orange-600';
+                statusHtml = `
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-700 border border-orange-200">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        منخفض
+                    </span>
+                `;
+            } else {
+                daysClass = 'text-teal-600';
+                statusHtml = `
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-teal-100 text-green-700 border border-green-200">
+                        <i class="fas fa-check-circle"></i>
+                        مستقر
+                    </span>
+                `;
+            }
+            
+            return `
+                <tr class="hover:bg-slate-50 transition-all">
+                    <td class="py-4 px-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-teal-100 flex items-center justify-center text-teal-600">
+                                <i class="fas fa-box"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-slate-800">${item.name}</p>
+                                <p class="text-xs text-slate-500">${item.category_name}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-4 px-4">
+                        <span class="font-semibold text-slate-700">${item.stock}</span>
+                    </td>
+                    <td class="py-4 px-4">
+                        <span class="text-sm text-slate-600">${item.estimated_stock_out || '-'}</span>
+                    </td>
+                    <td class="py-4 px-4">
+                        <span class="font-bold text-lg ${daysClass}">
+                            ${item.days_until_stock_out} يوم
+                        </span>
+                    </td>
+                    <td class="py-4 px-4">
+                        ${statusHtml}
+                    </td>
+                </tr>
+            `;
+        }
+    });
 </script>
 {% endblock %}

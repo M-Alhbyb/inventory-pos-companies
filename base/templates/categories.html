@@ -66,7 +66,7 @@
                         </button>
                     </td>
                 </tr>
-                {% empty %}
+                {% endfor %}
 {% if request.GET.q %}
 <tr>
 <td colspan="3" class="py-8 text-center text-slate-500">
@@ -87,76 +87,65 @@
 </td>
 </tr>
 {% endif %}
-{% endfor %}
             </tbody>
         </table>
     </div>
-    {% if page_obj.has_other_pages %}
-        <!-- Mobile view -->
-    <div class="flex flex-1 justify-between sm:hidden">
-        {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">السابق</a>
-        {% else %}
-            <span class="relative inline-flex items-center rounded-md border border-slate-300 bg-slate-100 px-4 py-2 text-sm font-medium text-slate-400 cursor-not-allowed">السابق</span>
-        {% endif %}
-        
-        {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}" class="relative ml-3 inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">التالي</a>
-        {% else %}
-            <span class="relative ml-3 inline-flex items-center rounded-md border border-slate-300 bg-slate-100 px-4 py-2 text-sm font-medium text-slate-400 cursor-not-allowed">التالي</span>
-        {% endif %}
-    </div>
-
-    <!-- Desktop view -->
-    <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-        <div>
-            
-        </div>
-        <div>
-            <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                <!-- Previous Page -->
-                {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center rounded-r-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus:z-20 focus:outline-offset-0">
-                        <span class="sr-only">السابق</span>
-                        <i class="fas fa-chevron-right h-5 w-5"></i>
-                    </a>
-                {% else %}
-                    <span class="relative inline-flex items-center rounded-r-md px-2 py-2 text-slate-300 ring-1 ring-inset ring-slate-300 cursor-not-allowed">
-                        <span class="sr-only">السابق</span>
-                        <i class="fas fa-chevron-right h-5 w-5"></i>
-                    </span>
-                {% endif %}
-
-                <!-- Page Numbers -->
-                {% for i in page_obj.paginator.page_range %}
-                    {% if page_obj.number == i %}
-                        <span aria-current="page" class="relative z-10 inline-flex items-center bg-blue-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">{{ i }}</span>
-                    {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
-                        <a href="?page={{ i }}" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus:z-20 focus:outline-offset-0">{{ i }}</a>
-                    {% endif %}
-                {% endfor %}
-
-                <!-- Next Page -->
-                {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}" class="relative inline-flex items-center rounded-l-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus:z-20 focus:outline-offset-0">
-                        <span class="sr-only">التالي</span>
-                        <i class="fas fa-chevron-left h-5 w-5"></i>
-                    </a>
-                {% else %}
-                    <span class="relative inline-flex items-center rounded-l-md px-2 py-2 text-slate-300 ring-1 ring-inset ring-slate-300 cursor-not-allowed">
-                        <span class="sr-only">التالي</span>
-                        <i class="fas fa-chevron-left h-5 w-5"></i>
-                    </span>
-                {% endif %}
-            </nav>
+    
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="hidden py-8 text-center">
+        <div class="inline-flex items-center gap-3 px-6 py-3 bg-slate-100 rounded-full">
+            <div class="w-5 h-5 border-2 border-slate-300 border-t-blue-500 rounded-full animate-spin"></div>
+            <span class="text-slate-600 font-medium">جاري تحميل المزيد...</span>
         </div>
     </div>
-    {% endif %}
+    
+    <!-- End of List Message -->
+    <div id="end-of-list" class="hidden py-6 text-center">
+        <span class="text-slate-400 text-sm">تم عرض جميع الفئات</span>
+    </div>
 </div>
 </div>
 {% include 'partials/categories-modals.html' %}
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'base/js/infinite-scroll.js' %}"></script>
 <script src="{% static 'js/categories.js' %}"></script>
+<script>
+// Initialize infinite scroll for categories
+const categoriesScroll = new InfiniteScroll({
+    nextPage: {% if page_obj.has_next %}{{ page_obj.next_page_number }}{% else %}null{% endif %},
+    hasNext: {% if page_obj.has_next %}true{% else %}false{% endif %},
+    containerSelector: 'tbody',
+    createRowHtml: function(item) {
+        // Truncate description
+        const words = item.description.split(' ');
+        const truncated = words.length > 10 ? words.slice(0, 10).join(' ') + '...' : item.description;
+        
+        return `
+            <tr class="border-b border-slate-100 hover:bg-slate-50 transition-all">
+                <td class="py-4 px-4">
+                    <div class="flex items-center space-x-3 space-x-reverse">
+                        <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                            <i class="fas fa-layer-group text-white"></i>
+                        </div>
+                        <span class="font-medium text-slate-800 category-name-${item.id}">${item.name}</span>
+                    </div>
+                </td>
+                <td class="py-4 px-4 text-sm text-slate-600 category-description-${item.id}">${truncated}</td>
+                <td class="py-4 px-4 flex items-center justify-center gap-2">
+                    <button onclick="EditModalFunction(${item.id})" class="openEditCategoryModal flex items-center text-sm gap-2 justify-between p-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg">
+                        تعديل
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="DeleteModalFunction(${item.id})" class="openDeleteCategoryModal flex items-center text-sm gap-2 justify-between p-2 rounded-lg bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 transition-all shadow-md hover:shadow-lg">
+                        حذف
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }
+});
+</script>
 {% endblock %}

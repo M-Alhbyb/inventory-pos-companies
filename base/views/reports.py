@@ -1,18 +1,23 @@
-from django.shortcuts import render
-from django.db.models import Sum, Count, Q, F, DecimalField
-from django.db.models.functions import TruncDate, TruncMonth
-from base.models import Transaction, TransactionItem, Product, User, Category
+"""Report generation views."""
+
+from datetime import datetime
 from decimal import Decimal
-from datetime import datetime, timedelta
+
+from django.shortcuts import render, get_object_or_404
+from django.db.models import Sum, Count, Q
+from django.db.models.functions import TruncDate
 from django.utils import timezone
+
+from base.models import Transaction, TransactionItem, Product, User, Category
 from base.constants import FirstDayOfMonth
 
 
 def reports_view(request):
+    """Display comprehensive reports with date filtering."""
+    # Parse date range
     end_date = timezone.now()
     start_date = end_date.replace(day=FirstDayOfMonth.get())
     
-    # Parse custom date range if provided
     if request.GET.get('start_date'):
         start_date = datetime.strptime(request.GET.get('start_date'), '%Y-%m-%d')
         start_date = timezone.make_aware(start_date)
@@ -20,29 +25,19 @@ def reports_view(request):
         end_date = datetime.strptime(request.GET.get('end_date'), '%Y-%m-%d')
         end_date = timezone.make_aware(end_date)
     
-    total_sales = Transaction.objects.filter(
-        type='take',
-        date__gte=start_date,
-        date__lte=end_date
-    ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+    # Date filter for transactions
+    date_filter = {'date__gte': start_date, 'date__lte': end_date}
     
-    total_payments = Transaction.objects.filter(
-        type='payment',
-        date__gte=start_date,
-        date__lte=end_date
-    ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+    # Calculate totals
+    def get_transaction_total(trans_type):
+        return Transaction.objects.filter(
+            type=trans_type, **date_filter
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
     
-    total_fees = Transaction.objects.filter(
-        type='fees',
-        date__gte=start_date,
-        date__lte=end_date
-    ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-    
-    total_restores = Transaction.objects.filter(
-        type='restore',
-        date__gte=start_date,
-        date__lte=end_date
-    ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+    total_sales = get_transaction_total('take')
+    total_payments = get_transaction_total('payment')
+    total_fees = get_transaction_total('fees')
+    total_restores = get_transaction_total('restore')
     
     # Net profit calculation (payments - fees)
     net_profit = total_payments - total_fees
@@ -54,10 +49,8 @@ def reports_view(request):
     
     # Transaction counts
     transaction_counts = {
-        'take': Transaction.objects.filter(type='take', date__gte=start_date, date__lte=end_date).count(),
-        'payment': Transaction.objects.filter(type='payment', date__gte=start_date, date__lte=end_date).count(),
-        'restore': Transaction.objects.filter(type='restore', date__gte=start_date, date__lte=end_date).count(),
-        'fees': Transaction.objects.filter(type='fees', date__gte=start_date, date__lte=end_date).count(),
+        trans_type: Transaction.objects.filter(type=trans_type, **date_filter).count()
+        for trans_type in ['take', 'payment', 'restore', 'fees']
     }
     
     # Top merchants by sales
@@ -82,8 +75,7 @@ def reports_view(request):
     
     # Daily transaction trends
     daily_trends = Transaction.objects.filter(
-        date__gte=start_date,
-        date__lte=end_date
+        **date_filter
     ).annotate(
         day=TruncDate('date')
     ).values('day', 'type').annotate(
@@ -124,7 +116,7 @@ def reports_view(request):
         total_products=Sum('transactions__items__quantity')
     ).order_by('-total_products')[:5]
     
-    context = {
+    return render(request, 'reports.html', {
         'start_date': start_date,
         'end_date': end_date,
         'total_sales': total_sales,
@@ -140,16 +132,12 @@ def reports_view(request):
         'category_performance': category_performance,
         'low_stock_products': low_stock_products,
         'top_representatives': top_representatives,
-    }
-    
-    return render(request, 'reports.html', context)
+    })
 
 
 def merchant_report(request, merchant_id):
-    """
-    Detailed report for a specific merchant
-    """
-    merchant = User.objects.get(id=merchant_id, user_type='merchant')
+    """Detailed report for a specific merchant."""
+    merchant = get_object_or_404(User, id=merchant_id, user_type='merchant')
     
     # Get all transactions for this merchant
     transactions = Transaction.objects.filter(user=merchant).order_by('-date')
@@ -167,23 +155,19 @@ def merchant_report(request, merchant_id):
         total_amount=Sum('total')
     ).order_by('-total_quantity')
     
-    context = {
+    return render(request, 'merchant_report.html', {
         'merchant': merchant,
         'transactions': transactions,
         'total_taken': total_taken,
         'total_paid': total_paid,
         'current_debt': merchant.debt,
         'products_taken': products_taken,
-    }
-    
-    return render(request, 'merchant_report.html', context)
+    })
 
 
 def product_report(request, product_id):
-    """
-    Detailed report for a specific product
-    """
-    product = Product.objects.get(id=product_id)
+    """Detailed report for a specific product."""
+    product = get_object_or_404(Product, id=product_id)
     
     # Transaction history for this product
     transaction_items = TransactionItem.objects.filter(
@@ -211,14 +195,11 @@ def product_report(request, product_id):
         total_quantity=Sum('transactions__items__quantity')
     ).order_by('-total_quantity')[:5]
     
-    context = {
+    return render(request, 'product_report.html', {
         'product': product,
         'transaction_items': transaction_items,
         'total_taken': total_taken,
         'total_restored': total_restored,
         'total_revenue': total_revenue,
         'top_customers': top_customers,
-    }
-    
-    return render(request, 'product_report.html', context)
-
+    })

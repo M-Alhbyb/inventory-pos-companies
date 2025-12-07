@@ -9,6 +9,11 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 from pathlib import Path
 
@@ -20,10 +25,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-1ahr*%!_d*(f!9412)f*9+r==8+l65apjfi6y8b6!&ivbo4&y_'
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 't')
 
 ALLOWED_HOSTS = []
 
@@ -39,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'import_export',
     'base',
+    'chat',
 ]
 
 MIDDLEWARE = [
@@ -135,3 +141,6 @@ CELERY_BROKER_URL = 'redis://localhost:6379/0' # The task queue
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0' # Where to store results
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
+
+
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')

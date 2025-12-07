@@ -1,0 +1,282 @@
+<!-- Progress Modal Overlay -->
+<div id="progress-modal" class="fixed inset-0 z-[60] hidden">
+    <!-- Backdrop -->
+    <div id="modal-backdrop" class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300"></div>
+    
+    <!-- Modal Content (Maximized View) -->
+    <div id="modal-maximized" class="flex items-center justify-center min-h-screen p-4">
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 transform transition-all">
+            <!-- Modal Controls -->
+            <div class="absolute top-3 left-3 flex gap-1">
+                <button onclick="AIProgressManager.minimize()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 flex items-center justify-center transition-colors" title="تصغير">
+                    <i class="fas fa-minus text-sm"></i>
+                </button>
+            </div>
+            
+            <!-- Header -->
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center">
+                    <i id="modal-icon" class="fas fa-brain text-white text-2xl animate-pulse"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">جاري تحليل البيانات</h3>
+                <p id="status-message" class="text-sm text-slate-500 mt-1">يتم الآن حساب التوقعات...</p>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="mb-4">
+                <div class="flex justify-between text-sm font-medium text-slate-600 mb-2">
+                    <span>التقدم</span>
+                    <span id="progress-text">0%</span>
+                </div>
+                <div class="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <!-- Status Indicator -->
+            <div id="status-indicator" class="flex items-center justify-center gap-2 text-sm text-slate-500">
+                <div class="flex gap-1">
+                    <span class="w-2 h-2 bg-teal-500 rounded-full animate-bounce" style="animation-delay: 0ms"></span>
+                    <span class="w-2 h-2 bg-teal-500 rounded-full animate-bounce" style="animation-delay: 150ms"></span>
+                    <span class="w-2 h-2 bg-teal-500 rounded-full animate-bounce" style="animation-delay: 300ms"></span>
+                </div>
+                <span>جاري المعالجة</span>
+            </div>
+            
+            <!-- Success/Failure Message (hidden by default) -->
+            <div id="completion-message" class="hidden text-center mt-4">
+                <p id="completion-text" class="font-medium"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Minimized Progress Indicator (Floating Bar) -->
+<div id="progress-minimized" class="fixed bottom-6 right-6 z-[60] hidden">
+    <div class="bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden transition-all duration-300 hover:shadow-3xl" style="width: 320px;">
+        <!-- Minimized Header -->
+        <div class="bg-gradient-to-r from-teal-500 to-emerald-500 px-4 py-2.5 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-7 h-7 bg-white/20 rounded-full flex items-center justify-center">
+                    <i id="mini-icon" class="fas fa-brain text-white text-xs animate-pulse"></i>
+                </div>
+                <span class="text-white font-semibold text-sm">تحليل البيانات</span>
+            </div>
+            <div class="flex items-center gap-1">
+                <button onclick="AIProgressManager.maximize()" class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors" title="توسيع">
+                    <i class="fas fa-expand text-xs"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Minimized Progress -->
+        <div class="px-4 py-3">
+            <div class="flex items-center justify-between mb-2">
+                <span id="mini-status" class="text-xs text-slate-600">جاري المعالجة...</span>
+                <span id="mini-progress-text" class="text-xs font-bold text-teal-600">0%</span>
+            </div>
+            <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div id="mini-progress-bar" class="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /**
+     * Global AI Progress Manager
+     * Handles state persistence across pages using localStorage
+     */
+    const AIProgressManager = {
+        elements: {},
+        state: {
+            taskId: null,
+            isMinimized: false,
+            isActive: false
+        },
+        
+        init() {
+            // Cache DOM elements
+            this.elements = {
+                modal: document.getElementById('progress-modal'),
+                minimized: document.getElementById('progress-minimized'),
+                progressBar: document.getElementById('progress-bar'),
+                progressText: document.getElementById('progress-text'),
+                statusMessage: document.getElementById('status-message'),
+                statusIndicator: document.getElementById('status-indicator'),
+                completionMessage: document.getElementById('completion-message'),
+                completionText: document.getElementById('completion-text'),
+                modalIcon: document.getElementById('modal-icon'),
+                miniProgressBar: document.getElementById('mini-progress-bar'),
+                miniProgressText: document.getElementById('mini-progress-text'),
+                miniStatus: document.getElementById('mini-status'),
+                miniIcon: document.getElementById('mini-icon')
+            };
+
+            // Restore state from localStorage
+            const savedState = localStorage.getItem('ai_task_state');
+            if (savedState) {
+                const parsed = JSON.parse(savedState);
+                if (parsed.isActive && parsed.taskId) {
+                    this.state = parsed;
+                    this.resumeTask();
+                }
+            }
+        },
+
+        start(taskId) {
+            this.state = {
+                taskId: taskId,
+                isMinimized: false,
+                isActive: true
+            };
+            this.saveState();
+            this.showModal();
+            this.pollStatus();
+        },
+
+        resumeTask() {
+            if (this.state.isMinimized) {
+                this.minimize();
+            } else {
+                this.showModal();
+            }
+            this.pollStatus();
+        },
+
+        saveState() {
+            localStorage.setItem('ai_task_state', JSON.stringify(this.state));
+        },
+
+        clearState() {
+            this.state.isActive = false;
+            this.state.taskId = null;
+            localStorage.removeItem('ai_task_state');
+        },
+
+        minimize() {
+            this.state.isMinimized = true;
+            this.saveState();
+            this.elements.modal.classList.add('hidden');
+            this.elements.minimized.classList.remove('hidden');
+        },
+
+        maximize() {
+            this.state.isMinimized = false;
+            this.saveState();
+            this.elements.minimized.classList.add('hidden');
+            this.elements.modal.classList.remove('hidden');
+        },
+
+        showModal() {
+            this.elements.modal.classList.remove('hidden');
+            this.elements.minimized.classList.add('hidden');
+            this.resetUI();
+        },
+
+        resetUI() {
+            // Reset Maximized
+            this.elements.progressBar.style.width = '0%';
+            this.elements.progressText.textContent = '0%';
+            this.elements.statusMessage.textContent = 'يتم الآن حساب التوقعات...';
+            this.elements.statusIndicator.classList.remove('hidden');
+            this.elements.completionMessage.classList.add('hidden');
+            this.elements.modalIcon.className = 'fas fa-brain text-white text-2xl animate-pulse';
+            
+            // Reset Minimized
+            this.elements.miniProgressBar.style.width = '0%';
+            this.elements.miniProgressText.textContent = '0%';
+            this.elements.miniStatus.textContent = 'جاري المعالجة...';
+            this.elements.miniIcon.className = 'fas fa-brain text-white text-xs animate-pulse';
+        },
+
+        pollStatus() {
+            if (!this.state.taskId) return;
+
+            const intervalId = setInterval(() => {
+                fetch(`/status/${this.state.taskId}/`) 
+                    .then(response => response.json())
+                    .then(data => {
+                        const progress = data.progress;
+                        
+                        this.updateUI(progress);
+                        
+                        if (data.state === 'SUCCESS') {
+                            clearInterval(intervalId);
+                            this.handleSuccess();
+                        } else if (data.state === 'FAILURE') {
+                            clearInterval(intervalId);
+                            this.handleError('فشل في تحديث التوقعات');
+                        }
+                    })
+                    .catch(error => {
+                        clearInterval(intervalId);
+                        this.handleError('حدث خطأ في الاتصال');
+                        console.error('Error:', error);
+                    });
+            }, 1500);
+        },
+
+        updateUI(progress) {
+            // Maximized
+            this.elements.progressBar.style.width = `${progress}%`;
+            this.elements.progressText.textContent = `${progress}%`;
+            
+            // Minimized
+            this.elements.miniProgressBar.style.width = `${progress}%`;
+            this.elements.miniProgressText.textContent = `${progress}%`;
+        },
+
+        handleSuccess() {
+            this.clearState();
+            
+            // Maximized updates
+            this.elements.statusIndicator.classList.add('hidden');
+            this.elements.completionMessage.classList.remove('hidden');
+            this.elements.completionText.textContent = 'تم تحديث التوقعات بنجاح!';
+            this.elements.completionText.className = 'font-medium text-emerald-600';
+            this.elements.modalIcon.className = 'fas fa-check text-white text-2xl';
+            this.elements.statusMessage.textContent = 'سيتم تحديث الصفحة الآن...';
+            
+            // Minimized updates
+            this.elements.miniStatus.textContent = 'تم بنجاح!';
+            this.elements.miniStatus.className = 'text-xs font-bold text-emerald-600';
+            this.elements.miniIcon.className = 'fas fa-check text-white text-xs';
+            
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        },
+
+        handleError(message) {
+            this.clearState();
+            
+            // Maximized updates
+            this.elements.statusIndicator.classList.add('hidden');
+            this.elements.completionMessage.classList.remove('hidden');
+            this.elements.completionText.textContent = message;
+            this.elements.completionText.className = 'font-medium text-red-600';
+            this.elements.modalIcon.className = 'fas fa-times text-white text-2xl';
+            this.elements.statusMessage.textContent = 'يرجى المحاولة مرة أخرى';
+            
+            // Minimized updates
+            this.elements.miniStatus.textContent = 'فشل العملية';
+            this.elements.miniStatus.className = 'text-xs font-bold text-red-600';
+            this.elements.miniIcon.className = 'fas fa-times text-white text-xs';
+            
+            // Re-enable start button if on AI page
+            const startBtn = document.getElementById('start-button');
+            if (startBtn) startBtn.disabled = false;
+            
+            setTimeout(() => {
+                this.elements.modal.classList.add('hidden');
+                this.elements.minimized.classList.add('hidden');
+            }, 3000);
+        }
+    };
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        AIProgressManager.init();
+    });
+</script>

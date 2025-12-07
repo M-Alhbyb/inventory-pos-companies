@@ -1,10 +1,24 @@
+"""Django Import/Export resources for data import and export."""
+
 from import_export import resources, fields
-from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
+from import_export.widgets import ForeignKeyWidget
+
 from .models import Transaction, TransactionItem, User, Product
 
 
+# Arabic translation mappings for transaction types
+TRANSACTION_TYPE_TO_ARABIC = {
+    'take': 'سحب',
+    'payment': 'دفع',
+    'restore': 'إرجاع',
+    'fees': 'منصرف'
+}
+
+TRANSACTION_TYPE_FROM_ARABIC = {v: k for k, v in TRANSACTION_TYPE_TO_ARABIC.items()}
+
+
 class TransactionResource(resources.ModelResource):
-    """Resource for importing/exporting Transaction data"""
+    """Resource for importing/exporting Transaction data."""
     
     user = fields.Field(
         column_name='المستخدم',
@@ -36,32 +50,23 @@ class TransactionResource(resources.ModelResource):
         report_skipped = False
     
     def dehydrate_type(self, transaction):
-        """Convert type to Arabic for export"""
-        type_translations = {
-            'take': 'سحب',
-            'payment': 'دفع',
-            'restore': 'إرجاع',
-            'fees': 'منصرف'
-        }
-        return type_translations.get(transaction.type, transaction.type)
+        """Convert type to Arabic for export."""
+        return TRANSACTION_TYPE_TO_ARABIC.get(transaction.type, transaction.type)
     
     def before_import_row(self, row, **kwargs):
-        """Convert Arabic type back to English before import"""
-        type_reverse = {
-            'سحب': 'take',
-            'دفع': 'payment',
-            'إرجاع': 'restore',
-            'منصرف': 'fees'
-        }
+        """Convert Arabic type back to English before import."""
         if 'نوع المعاملة' in row:
-            row['نوع المعاملة'] = type_reverse.get(row['نوع المعاملة'], row['نوع المعاملة'])
+            row['نوع المعاملة'] = TRANSACTION_TYPE_FROM_ARABIC.get(
+                row['نوع المعاملة'], 
+                row['نوع المعاملة']
+            )
     
     def get_export_headers(self, selected_fields=None):
-        """Return Arabic headers for export"""
+        """Return Arabic headers for export."""
         return ['رقم المعاملة', 'المستخدم', 'نوع المعاملة', 'التاريخ', 'المجموع']
     
     def export(self, queryset=None, *args, **kwargs):
-        """Custom export with items column"""
+        """Custom export with items column."""
         dataset = super().export(queryset, *args, **kwargs)
         
         # Add items column
@@ -69,8 +74,11 @@ class TransactionResource(resources.ModelResource):
         if queryset:
             for transaction in queryset:
                 items = transaction.items.all()
-                items_str = ", ".join([f"{item.product.name} (x{item.quantity})" for item in items])
-                items_column.append(items_str if items_str else '-')
+                items_str = ", ".join([
+                    f"{item.product.name} (x{item.quantity})" 
+                    for item in items if item.product
+                ])
+                items_column.append(items_str or '-')
         
         # Insert items column before amount
         dataset.insert_col(4, items_column, header='العناصر')
@@ -79,7 +87,7 @@ class TransactionResource(resources.ModelResource):
 
 
 class TransactionItemResource(resources.ModelResource):
-    """Resource for importing/exporting TransactionItem data"""
+    """Resource for importing/exporting TransactionItem data."""
     
     transaction_id = fields.Field(
         column_name='رقم المعاملة',

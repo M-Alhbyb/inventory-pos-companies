@@ -1,15 +1,22 @@
+"""Transaction management views with import/export functionality."""
+
 from django.shortcuts import render, redirect
 from django.db.models import Q
-from base.models import Transaction, User
-from django.core.paginator import Paginator
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
+from django.core.paginator import Paginator
 from tablib import Dataset
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+
+from base.models import Transaction
 from base.resources import TransactionResource
+
+ITEMS_PER_PAGE = 10
 
 
 def transactions_view(request):
-    # Get all transactions
+    """Display all transactions with filtering, search, and pagination."""
     transactions = Transaction.objects.select_related('user').prefetch_related('items__product').order_by('-date')
     
     # Handle search
@@ -33,43 +40,79 @@ def transactions_view(request):
         transactions = transactions.filter(user__user_type=user_type)
     
     # Get statistics
-    total_transactions = transactions.count()
-    total_take = transactions.filter(type='take').count()
-    total_payment = transactions.filter(type='payment').count()
-    total_restore = transactions.filter(type='restore').count()
-    total_fees = transactions.filter(type='fees').count()
+    stats = {
+        'total_transactions': transactions.count(),
+        'total_take': transactions.filter(type='take').count(),
+        'total_payment': transactions.filter(type='payment').count(),
+        'total_restore': transactions.filter(type='restore').count(),
+        'total_fees': transactions.filter(type='fees').count(),
+    }
 
-    # Handle POST requests
+    # Handle POST requests (export/import)
     if request.method == 'POST':
-        # Check if it's export or import
         if 'export' in request.POST:
             return export_transactions(transactions)
         elif 'import' in request.POST and request.FILES.get('file'):
-            return import_transactions(request, transactions)
+            return import_transactions(request)
 
-    paginator = Paginator(transactions, 10)
-    page_number = request.GET.get('page')
+    # Pagination
+    paginator = Paginator(transactions, ITEMS_PER_PAGE)
+    page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
+
+    # Handle AJAX requests for infinite scroll
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return get_more_data_json(page_obj)
 
     context = {
         'page_obj': page_obj,
-        'total_transactions': total_transactions,
-        'total_take': total_take,
-        'total_payment': total_payment,
-        'total_restore': total_restore,
-        'total_fees': total_fees,
-        'current_type': transaction_type if transaction_type else 'all',
-        'current_user_type': user_type if user_type else 'all',
-        'search_query': q if q else '',
+        **stats,
+        'current_type': transaction_type or 'all',
+        'current_user_type': user_type or 'all',
+        'search_query': q or '',
     }
     
     return render(request, 'transactions.html', context)
 
 
-def export_transactions(queryset):
-    """Export transactions using django-import-export"""
-    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+def get_more_data_json(page_obj):
+    """Return paginated transaction data as JSON for infinite scroll."""
+    data = []
+    for transaction in page_obj:
+        # Get items as list of dicts
+        items = []
+        for item in transaction.items.all():
+            items.append({
+                'product_name': item.product.name if item.product else '-',
+                'quantity': item.quantity,
+                'price': str(item.price) if item.price else '-',
+                'total': str(item.total) if item.total else '-',
+            })
+        
+        data.append({
+            'id': transaction.id,
+            'user': transaction.user.username if transaction.user else None,
+            'user_type': transaction.user.user_type if transaction.user else None,
+            'user_full_name': transaction.user.get_full_name() if transaction.user else None,
+            'type': transaction.type,
+            'type_display': transaction.get_type_display(),
+            'date': transaction.date.strftime('%Y/%m/%d') if transaction.date else None,
+            'time': transaction.date.strftime('%I:%M %p') if transaction.date else None,
+            'items': items,
+            'items_count': len(items),
+            'amount': str(transaction.amount) if transaction.amount else None,
+        })
     
+    return JsonResponse({
+        'success': True,
+        'data': data,
+        'has_next': page_obj.has_next(),
+        'next_page_number': page_obj.next_page_number() if page_obj.has_next() else None,
+    })
+
+
+def export_transactions(queryset):
+    """Export transactions to Excel with styling."""
     resource = TransactionResource()
     dataset = resource.export(queryset)
     
@@ -79,10 +122,7 @@ def export_transactions(queryset):
     )
     response['Content-Disposition'] = 'attachment; filename="transactions.xlsx"'
     
-    # Convert to xlsx with styling
-    from openpyxl import Workbook
-    from io import BytesIO
-    
+    # Create workbook with styling
     wb = Workbook()
     ws = wb.active
     ws.title = "المعاملات"
@@ -111,7 +151,7 @@ def export_transactions(queryset):
         ws.column_dimensions[col].width = width
     
     # Write headers
-    headers = dataset.headers if dataset.headers else ['رقم المعاملة', 'المستخدم', 'نوع المعاملة', 'التاريخ', 'العناصر', 'المجموع']
+    headers = dataset.headers or ['رقم المعاملة', 'المستخدم', 'نوع المعاملة', 'التاريخ', 'العناصر', 'المجموع']
     for col_num, header in enumerate(headers, 1):
         cell = ws.cell(row=1, column=col_num, value=header)
         cell.font = header_font
@@ -128,18 +168,14 @@ def export_transactions(queryset):
             cell = ws.cell(row=row_num, column=col_num, value=value)
             cell.border = thin_border
             cell.fill = row_fill
-            if col_num in [1, 3, 6]:
-                cell.alignment = center_alignment
-            else:
-                cell.alignment = cell_alignment
+            cell.alignment = center_alignment if col_num in [1, 3, 6] else cell_alignment
     
-    # Save to response
     wb.save(response)
     return response
 
 
-def import_transactions(request, queryset):
-    """Import transactions using django-import-export"""
+def import_transactions(request):
+    """Import transactions from uploaded file."""
     resource = TransactionResource()
     dataset = Dataset()
     
@@ -148,9 +184,9 @@ def import_transactions(request, queryset):
     
     try:
         if file_format == 'csv':
-            imported_data = dataset.load(uploaded_file.read().decode('utf-8'), format='csv')
+            dataset.load(uploaded_file.read().decode('utf-8'), format='csv')
         elif file_format in ['xlsx', 'xls']:
-            imported_data = dataset.load(uploaded_file.read(), format='xlsx')
+            dataset.load(uploaded_file.read(), format='xlsx')
         else:
             messages.error(request, 'صيغة الملف غير مدعومة. يرجى استخدام ملف CSV أو Excel.')
             return redirect('base:transactions')
@@ -160,8 +196,7 @@ def import_transactions(request, queryset):
         
         if result.has_errors():
             error_messages = []
-            for row_errors in result.row_errors():
-                row_num, errors = row_errors
+            for row_num, errors in result.row_errors():
                 for error in errors:
                     error_messages.append(f"الصف {row_num}: {error.error}")
             messages.error(request, f'حدثت أخطاء أثناء الاستيراد: {"; ".join(error_messages[:5])}')
