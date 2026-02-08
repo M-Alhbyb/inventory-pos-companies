@@ -11,7 +11,6 @@ TRANSACTION_TYPE_TO_ARABIC = {
     'take': 'سحب',
     'payment': 'دفع',
     'restore': 'إرجاع',
-    'fees': 'منصرف'
 }
 
 TRANSACTION_TYPE_FROM_ARABIC = {v: k for k, v in TRANSACTION_TYPE_TO_ARABIC.items()}

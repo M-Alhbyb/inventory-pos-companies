@@ -36,19 +36,6 @@
         </div>
     </div>
     
-    <!-- Total Merchants -->
-    <div class="bg-white rounded-xl shadow-md p-6 border border-slate-200 hover:shadow-xl transition-all group">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-sm font-medium text-slate-600 mb-1">إجمالي التجار</p>
-                <h3 class="text-3xl font-bold text-slate-800">{{ total_merchants }}</h3>
-            </div>
-            <div class="w-16 h-16 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                <i class="fas fa-store text-white text-2xl"></i>
-            </div>
-        </div>
-    </div>
-    
     <!-- Total Representatives -->
     <div class="bg-white rounded-xl shadow-md p-6 border border-slate-200 hover:shadow-xl transition-all group">
         <div class="flex items-center justify-between">
@@ -72,17 +59,7 @@
         </button>
         
         {% endcomment %}
-        <button onclick="openAddFeesModal()" class="flex items-center justify-between p-4 rounded-lg bg-gradient-to-r from-gray-500 to-gray-600 text-white hover:from-gray-600 hover:to-gray-700 transition-all shadow-md hover:shadow-lg">
-            <span class="font-medium">إضافة منصرف</span>
-            <i class="fas fa-dollar-sign"></i>
-        </button>
-        
-        <button onclick="openMerchantTransactionTypeModal()" class="flex items-center justify-between p-4 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 transition-all shadow-md hover:shadow-lg">
-            <span class="font-medium">معاملة تاجر</span>
-            <i class="fas fa-exchange-alt"></i>
-        </button>
-        
-        <button onclick="openRepresentativeTransactionTypeModal()" class="flex items-center justify-between p-4 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:from-purple-600 hover:to-purple-700 transition-all shadow-md hover:shadow-lg">
+        <button onclick="openRepresentativeTransactionTypeModal()" class="flex items-center justify-between p-4 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:from-purple-600 hover:to-purple-700 transition-all shadow-md hover:shadow-lg lg:col-start-2 lg:col-span-2">
             <span class="font-medium">معاملة مندوب</span>
             <i class="fas fa-exchange-alt"></i>
         </button>
@@ -126,12 +103,12 @@
                     <td class="py-4 px-4">
                         {% if transaction.user %}
                         <div class="flex items-center gap-2">
-                            <div class="w-8 h-8 rounded-full bg-gradient-to-br {% if transaction.user.user_type == 'merchant' %}from-orange-400 to-orange-500{% else %}from-purple-400 to-purple-500{% endif %} flex items-center justify-center shadow-sm">
-                                <i class="fas {% if transaction.user.user_type == 'merchant' %}fa-store{% else %}fa-user-tie{% endif %} text-white text-xs"></i>
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-500 flex items-center justify-center shadow-sm">
+                                <i class="fas fa-user-tie text-white text-xs"></i>
                             </div>
                             <div>
                                 <p class="font-semibold text-slate-800 text-sm">{{ transaction.user.get_full_name|default:transaction.user.username }}</p>
-                                <p class="text-xs text-slate-500">{% if transaction.user.user_type == 'merchant' %}تاجر{% else %}مندوب{% endif %}</p>
+                                <p class="text-xs text-slate-500">مندوب</p>
                             </div>
                         </div>
                         {% else %}
@@ -154,18 +131,13 @@
                             <i class="fas fa-undo"></i>
                             إرجاع
                         </span>
-                        {% elif transaction.type == 'fees' %}
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">
-                            <i class="fas fa-receipt"></i>
-                            منصرف
-                        </span>
                         {% endif %}
                     </td>
                     <td class="py-4 px-4">
                         {% if transaction.amount %}
                         <div class="flex items-center gap-1">
                             <span class="text-lg font-bold text-slate-800">{{ transaction.amount|floatformat:2 }}</span>
-                            <span class="text-sm text-slate-500">ج.س</span>
+                            <img src="{% static 'images/sar_symbol_dark.svg' %}" class="h-4 inline-block align-middle" alt="SAR">
                         </div>
                         {% else %}
                         <span class="text-slate-400 text-sm">-</span>
@@ -302,187 +274,35 @@
 </div>
 
 {% endcomment %}
-<!-- Add Fees Modal -->
-<div id="addFeesModal" class="fixed inset-0 hidden bg-black bg-opacity-50 z-50 items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all">
-        <div class="bg-gradient-to-r from-gray-500 to-gray-600 rounded-t-2xl px-6 py-4 flex items-center justify-between">
-            <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                <i class="fas fa-tags"></i>
-                إضافة منصرف جديد
-            </h3>
-            <button onclick="closeAddFeesModal()" class="text-white hover:text-slate-200 transition-all">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-        </div>
-        
-        <form method="POST" action="{% url 'base:add_fees' %}" class="p-6">
-            {% csrf_token %}
-            {% for field in fees_form %}
-            <div class="mb-4">
-                <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-slate-700 mb-2">
-                    {{ field.label }} {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
-                </label>
-                {{ field }}
-            </div>
-            {% endfor %}
-            
-            <div class="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-slate-100">
-                <button type="button" onclick="closeAddFeesModal()"
-                    class="px-6 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all font-medium">
-                    إلغاء
-                </button>
-                <button type="submit"
-                    class="px-6 py-2.5 rounded-lg bg-gradient-to-r from-gray-500 to-gray-600 text-white hover:from-gray-600 hover:to-gray-700 transition-all shadow-md hover:shadow-lg font-medium">
-                    <i class="fas fa-save ml-2"></i>
-                    حفظ
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
 
-<!-- Merchant Transaction Type Selection Modal -->
-<div id="merchantTransactionTypeModal" class="fixed inset-0 hidden bg-black bg-opacity-50 z-50 items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all">
-        <div class="bg-gradient-to-r from-orange-500 to-orange-600 rounded-t-2xl px-6 py-4 flex items-center justify-between">
-            <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                <i class="fas fa-exchange-alt"></i>
-                اختر نوع المعاملة
-            </h3>
-            <button onclick="closeMerchantTransactionTypeModal()" class="text-white hover:text-slate-200 transition-all">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-        </div>
-        
-        <div class="p-6">
-            <div class="grid grid-cols-2 gap-4">
-                <button onclick="selectMerchantTransactionType('take')" class="flex flex-col items-center justify-center p-6 rounded-lg border-2 border-red-200 hover:border-red-500 hover:bg-red-50 transition-all group">
-                    <i class="fas fa-shopping-cart text-3xl text-red-500 mb-3 group-hover:scale-110 transition-transform"></i>
-                    <span class="font-semibold text-slate-700">أخذ</span>
-                </button>
-                
-                <button onclick="selectMerchantTransactionType('payment')" class="flex flex-col items-center justify-center p-6 rounded-lg border-2 border-green-200 hover:border-green-500 hover:bg-green-50 transition-all group">
-                    <i class="fas fa-dollar-sign text-3xl text-green-500 mb-3 group-hover:scale-110 transition-transform"></i>
-                    <span class="font-semibold text-slate-700">دفع</span>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Representative Transaction Type Selection Modal -->
+<!-- Representative Transaction Type Modal -->
 <div id="representativeTransactionTypeModal" class="fixed inset-0 hidden bg-black bg-opacity-50 z-50 items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full transform transition-all">
         <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-t-2xl px-6 py-4 flex items-center justify-between">
             <h3 class="text-xl font-bold text-white flex items-center gap-2">
                 <i class="fas fa-exchange-alt"></i>
-                اختر نوع المعاملة
+                نوع المعاملة
             </h3>
             <button onclick="closeRepresentativeTransactionTypeModal()" class="text-white hover:text-slate-200 transition-all">
                 <i class="fas fa-times text-xl"></i>
             </button>
         </div>
         
-        <div class="p-6">
-            <div class="grid grid-cols-2 gap-4">
-                <button onclick="selectRepresentativeTransactionType('take')" class="flex flex-col items-center justify-center p-6 rounded-lg border-2 border-red-200 hover:border-red-500 hover:bg-red-50 transition-all group">
-                    <i class="fas fa-shopping-cart text-3xl text-red-500 mb-3 group-hover:scale-110 transition-transform"></i>
-                    <span class="font-semibold text-slate-700">أخذ</span>
-                </button>
-                
-                <button onclick="selectRepresentativeTransactionType('restore')" class="flex flex-col items-center justify-center p-6 rounded-lg border-2 border-blue-200 hover:border-blue-500 hover:bg-blue-50 transition-all group">
-                    <i class="fas fa-undo text-3xl text-blue-500 mb-3 group-hover:scale-110 transition-transform"></i>
-                    <span class="font-semibold text-slate-700">إرجاع</span>
-                </button>
-            </div>
+        <div class="p-6 grid grid-cols-2 gap-4">
+             <button onclick="selectRepresentativeTransactionType('take')" class="flex flex-col items-center justify-center gap-3 p-6 rounded-xl border-2 border-slate-200 hover:border-red-500 hover:bg-red-50 transition-all group">
+                <div class="w-16 h-16 rounded-full bg-red-100 group-hover:bg-red-200 flex items-center justify-center transition-colors">
+                    <i class="fas fa-shopping-cart text-2xl text-red-600"></i>
+                </div>
+                <span class="font-bold text-slate-700 group-hover:text-red-700">أخذ منتجات</span>
+             </button>
+             
+             <button onclick="selectRepresentativeTransactionType('restore')" class="flex flex-col items-center justify-center gap-3 p-6 rounded-xl border-2 border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition-all group">
+                <div class="w-16 h-16 rounded-full bg-blue-100 group-hover:bg-blue-200 flex items-center justify-center transition-colors">
+                    <i class="fas fa-undo text-2xl text-blue-600"></i>
+                </div>
+                <span class="font-bold text-slate-700 group-hover:text-blue-700">إرجاع منتجات</span>
+             </button>
         </div>
-    </div>
-</div>
-
-<!-- Merchant Transaction Form Modal -->
-<div id="merchantTransactionModal" class="fixed inset-0 hidden bg-black bg-opacity-50 z-50 items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto transform transition-all">
-        <div class="bg-gradient-to-r from-orange-500 to-orange-600 rounded-t-2xl px-6 py-4 flex items-center justify-between sticky top-0 z-10">
-            <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                <i class="fas fa-exchange-alt"></i>
-                <span id="merchantTransactionTitle">معاملة تاجر</span>
-            </h3>
-            <button onclick="closeMerchantTransactionModal()" class="text-white hover:text-slate-200 transition-all">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-        </div>
-        
-        <form id="merchantTransactionForm" class="p-6">
-            {% csrf_token %}
-            <input type="hidden" name="transaction_type" id="merchantTransactionType">
-            
-            <!-- Merchant Selection -->
-            <div class="mb-4">
-                <label class="block text-sm font-semibold text-slate-700 mb-2">
-                    التاجر <span class="text-red-500">*</span>
-                </label>
-                <select name="merchant_id" id="merchantSelect" required
-                    class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition-all text-right">
-                    <option value="">اختر تاجر</option>
-                    {% for merchant in merchants %}
-                    <option value="{{ merchant.id }}">{{ merchant.get_full_name|default:merchant.username }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <!-- Payment Amount (only for payment type) -->
-            <div id="merchantPaymentFields" class="hidden">
-                <div class="mb-4">
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">
-                        المبلغ <span class="text-red-500">*</span>
-                    </label>
-                    <input type="number" name="amount" step="0.01" min="0"
-                        class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition-all text-right"
-                        placeholder="0.00">
-                </div>
-            </div>
-            
-            <!-- Fees Amount (only for fees type) -->
-            <div id="merchantFeesFields" class="hidden">
-                <div class="mb-4">
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">
-                        المبلغ <span class="text-red-500">*</span>
-                    </label>
-                    <input type="number" name="fees_amount" step="0.01" min="0"
-                        class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition-all text-right"
-                        placeholder="0.00">
-                </div>
-            </div>
-            
-            <!-- Product Fields (for take type) -->
-            <div id="merchantProductFields" class="hidden">
-                <div class="mb-4">
-                    <div class="flex items-center justify-between mb-2">
-                        <label class="block text-sm font-semibold text-slate-700">
-                            المنتجات <span class="text-red-500">*</span>
-                        </label>
-                        <button type="button" onclick="addMerchantProductRow()" class="text-sm text-orange-600 hover:text-orange-700 font-medium">
-                            <i class="fas fa-plus ml-1"></i> إضافة منتج
-                        </button>
-                    </div>
-                    <div id="merchantProductRows">
-                        <!-- Product rows will be added here -->
-                    </div>
-                </div>
-            </div>
-            
-            <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
-                <button type="button" onclick="closeMerchantTransactionModal()"
-                    class="px-6 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all font-medium">
-                    إلغاء
-                </button>
-                <button type="submit"
-                    class="px-6 py-2.5 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 transition-all shadow-md hover:shadow-lg font-medium">
-                    <i class="fas fa-save ml-2"></i>
-                    حفظ
-                </button>
-            </div>
-        </form>
     </div>
 </div>
 
@@ -578,100 +398,6 @@ function closeAddCategoryModal() {
     document.body.style.overflow = 'auto';
 }
 
-// Fees Modal
-function openAddFeesModal() {
-    document.getElementById('addFeesModal').classList.remove('hidden');
-    document.getElementById('addFeesModal').classList.add('flex');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeAddFeesModal() {
-    document.getElementById('addFeesModal').classList.add('hidden');
-    document.getElementById('addFeesModal').classList.remove('flex');
-    document.body.style.overflow = 'auto';
-}
-
-// Merchant Transaction Type Modal
-function openMerchantTransactionTypeModal() {
-    document.getElementById('merchantTransactionTypeModal').classList.remove('hidden');
-    document.getElementById('merchantTransactionTypeModal').classList.add('flex');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeMerchantTransactionTypeModal() {
-    document.getElementById('merchantTransactionTypeModal').classList.add('hidden');
-    document.getElementById('merchantTransactionTypeModal').classList.remove('flex');
-    document.body.style.overflow = 'auto';
-}
-
-function selectMerchantTransactionType(type) {
-    closeMerchantTransactionTypeModal();
-    document.getElementById('merchantTransactionType').value = type;
-    
-    // Update title
-    const titles = {
-        'take': 'أخذ منتجات - تاجر',
-        'payment': 'دفع - تاجر',
-        'fees': 'منصرف - تاجر'
-    };
-    document.getElementById('merchantTransactionTitle').textContent = titles[type];
-    
-    // Show/hide appropriate fields
-    document.getElementById('merchantPaymentFields').classList.add('hidden');
-    document.getElementById('merchantFeesFields').classList.add('hidden');
-    document.getElementById('merchantProductFields').classList.add('hidden');
-    
-    if (type === 'payment') {
-        document.getElementById('merchantPaymentFields').classList.remove('hidden');
-    } else if (type === 'fees') {
-        document.getElementById('merchantFeesFields').classList.remove('hidden');
-    } else if (type === 'take') {
-        document.getElementById('merchantProductFields').classList.remove('hidden');
-        // Add initial product row
-        document.getElementById('merchantProductRows').innerHTML = '';
-        addMerchantProductRow();
-    }
-    
-    openMerchantTransactionModal();
-}
-
-function openMerchantTransactionModal() {
-    document.getElementById('merchantTransactionModal').classList.remove('hidden');
-    document.getElementById('merchantTransactionModal').classList.add('flex');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeMerchantTransactionModal() {
-    document.getElementById('merchantTransactionModal').classList.add('hidden');
-    document.getElementById('merchantTransactionModal').classList.remove('flex');
-    document.body.style.overflow = 'auto';
-    document.getElementById('merchantTransactionForm').reset();
-}
-
-function addMerchantProductRow() {
-    const container = document.getElementById('merchantProductRows');
-    const rowCount = container.children.length;
-    
-    const row = document.createElement('div');
-    row.className = 'grid grid-cols-12 gap-2 mb-2';
-    row.innerHTML = `
-        <div class="col-span-7">
-            <select name="product" required class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition-all text-right text-sm">
-                ${products.map(p => `<option value="${p.id}">${p.name}${p.stock !== '' ? ' (متوفر: ' + p.stock + ')' : ''}</option>`).join('')}
-            </select>
-        </div>
-        <div class="col-span-4">
-            <input type="number" name="quantity" min="1" required placeholder="الكمية" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition-all text-right text-sm">
-        </div>
-        <div class="col-span-1 flex items-center">
-            <button type="button" onclick="this.parentElement.parentElement.remove()" class="text-red-500 hover:text-red-700 transition-all">
-                <i class="fas fa-trash"></i>
-            </button>
-        </div>
-    `;
-    container.appendChild(row);
-}
-
 // Representative Transaction Type Modal
 function openRepresentativeTransactionTypeModal() {
     document.getElementById('representativeTransactionTypeModal').classList.remove('hidden');
@@ -740,38 +466,7 @@ function addRepresentativeProductRow() {
     container.appendChild(row);
 }
 
-// Handle merchant transaction form submission
-document.getElementById('merchantTransactionForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const merchantId = document.getElementById('merchantSelect').value;
-    
-    if (!merchantId) {
-        alert('الرجاء اختيار تاجر');
-        return;
-    }
-    
-    const formData = new FormData(this);
-    
-    try {
-        const response = await fetch(`/partners/${merchantId}/`, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-        });
-        
-        if (response.ok) {
-            closeMerchantTransactionModal();
-            location.reload();
-        } else {
-            alert('حدث خطأ أثناء إضافة المعاملة');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('حدث خطأ أثناء إضافة المعاملة');
-    }
-});
+// Product Modal
 
 // Handle representative transaction form submission
 document.getElementById('representativeTransactionForm').addEventListener('submit', async function(e) {
@@ -786,7 +481,7 @@ document.getElementById('representativeTransactionForm').addEventListener('submi
     const formData = new FormData(this);
     
     try {
-        const response = await fetch(`/partners/${representativeId}/`, {
+        const response = await fetch(`/representatives/${representativeId}/`, {
             method: 'POST',
             body: formData,
             headers: {

@@ -9,11 +9,7 @@
             <div class="flex items-center gap-2 text-sm text-slate-500 mb-2">
                 <a href="{% url 'base:dashboard' %}" class="hover:text-slate-800 transition-colors">الرئيسية</a>
                 <i class="fas fa-chevron-left text-xs"></i>
-                {% if partner.user_type == 'merchant' %} 
-                <a href="{% url 'base:merchants' %}" class="hover:text-orange-600 transition-colors">التجار</a>
-                {% elif partner.user_type == 'representative' %}
                 <a href="{% url 'base:representatives' %}" class="hover:text-purple-600 transition-colors">المندوبين</a>
-                {% endif %}
                 <i class="fas fa-chevron-left text-xs"></i>
                 <span class="text-slate-800 font-medium">{{ partner.get_full_name }}</span>
             </div>
@@ -26,17 +22,10 @@
         </div>
         
         <div class="flex items-center gap-3">
-            {% if partner.user_type == 'merchant' %} 
-            <a href="{% url 'base:merchants' %}" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all flex items-center gap-2">
-                <i class="fas fa-arrow-right"></i>
-                عودة للقائمة
-            </a>
-            {% elif partner.user_type == 'representative' %}
             <a href="{% url 'base:representatives' %}" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all flex items-center gap-2">
                 <i class="fas fa-arrow-right"></i>
                 عودة للقائمة
             </a>
-            {% endif %}
         </div>
     </div>
 
@@ -102,7 +91,7 @@
                     <div class>
                         {% if partner.user_type == 'merchant' %}
                         <p class="text-xl font-bold text-red-600">{{ partner.debt }}</p>
-                        <p class="text-xs text-slate-400 mt-1">جنيه سوداني</p>
+                        <p class="text-xs text-slate-400 mt-1"><img src="{% static 'images/sar_symbol_dark.svg' %}" class="h-3 inline-block" alt="SAR"></p>
                         {% elif partner.user_type == 'representative' %}
                         <p class="text-xl font-bold text-red-600">{{ partner.products_count }}</p>
                         {% endif %}
@@ -248,8 +237,8 @@
                                                     <tr class="hover:bg-slate-50 transition-colors">
                                                         <td class="px-4 py-2 text-sm text-slate-800">{{ item.product.name }}</td>
                                                         <td class="px-4 py-2 text-sm text-slate-600">{{ item.quantity }}</td>
-                                                        <td class="px-4 py-2 text-sm text-slate-600">{{ item.price }} ج.س</td>
-                                                        <td class="px-4 py-2 text-sm font-semibold text-slate-800">{{ item.total }} ج.س</td>
+                                                        <td class="px-4 py-2 text-sm text-slate-600">{{ item.price }} <img src="{% static 'images/sar_symbol_dark.svg' %}" class="h-3 inline-block" alt="SAR"></td>
+                                                        <td class="px-4 py-2 text-sm font-semibold text-slate-800">{{ item.total }} <img src="{% static 'images/sar_symbol_dark.svg' %}" class="h-3 inline-block" alt="SAR"></td>
                                                     </tr>
                                                     {% endfor %}
                                                 </tbody>

@@ -44,7 +44,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'import_export',
     'base',
-    'chat',
 ]
 
 MIDDLEWARE = [
@@ -137,10 +136,7 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CELERY_BROKER_URL = 'redis://localhost:6379/0' # The task queue
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0' # Where to store results
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-
-
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+# Authentication settings
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'base:dashboard'
+LOGOUT_REDIRECT_URL = 'login'

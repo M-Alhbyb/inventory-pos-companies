@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import general, categories, products, inventory, partners, transactions, fees, reports, ai
+from .views import general, categories, products, inventory, partners, transactions, reports, representative
 
 app_name = 'base'
 
@@ -24,35 +24,21 @@ urlpatterns = [
 
     # Transactions
     path('transactions/', transactions.transactions_view, name='transactions'),
-    
-    # Fees
-    path('fees/add/', fees.add_fees, name='add_fees'),
+    path('transactions/<int:transaction_id>/approve/', transactions.approve_transaction, name='approve_transaction'),
+    path('transactions/<int:transaction_id>/reject/', transactions.reject_transaction, name='reject_transaction'),
     
     # Reports
     path('reports/', reports.reports_view, name='reports'),
-    path('reports/merchant/<int:merchant_id>/', reports.merchant_report, name='merchant_report'),
+    path('reports/representative/<int:representative_id>/', reports.representative_report, name='representative_report'),
     path('reports/product/<int:product_id>/', reports.product_report, name='product_report'),
 
-    # Partners (generic routes)
-    path('partners/<str:partner_type>/', partners.partners_view, name='partners'),
-    path('partners/add/<str:partner_type>/', partners.add_partner, name='add_partner'),
-    path('partners/<int:partner_id>/edit/', partners.edit_partner, name='edit_partner'),
-    path('partners/<int:partner_id>/delete/', partners.delete_partner, name='delete_partner'),
-    path('partners/<int:partner_id>/', partners.partner_detail, name='partner_detail'),
-    path('partners/<int:partner_id>/transaction/<int:transaction_id>/delete/', partners.delete_transaction, name='partner_delete_transaction'),
-
-    # Merchants (aliases using partner views)
-    path('merchants/', partners.partners_view, {'partner_type': 'merchant'}, name='merchants'),
-    path('merchants/add/', partners.add_partner, {'partner_type': 'merchant'}, name='add_merchant'),
-    path('merchants/<int:partner_id>/', partners.partner_detail, name='merchant_detail'),
-
-    # Representatives (aliases using partner views)
+    # Representatives (Accountant view)
     path('representatives/', partners.partners_view, {'partner_type': 'representative'}, name='representatives'),
-    path('representatives/add/', partners.add_partner, {'partner_type': 'representative'}, name='add_representative'),
     path('representatives/<int:partner_id>/', partners.partner_detail, name='representative_detail'),
+    path('representatives/<int:partner_id>/transaction/<int:transaction_id>/delete/', partners.delete_transaction, name='representative_delete_transaction'),
 
-    # AI
-    path('ai/', ai.ai_view, name='ai'),
-    path('ai/refresh/', ai.ai_refresh, name='ai_refresh'),
-    path('status/<str:task_id>/', ai.get_process_status, name='get_process_status'),
+    # Representative Portal
+    path('rep/', representative.rep_dashboard, name='rep_dashboard'),
+    path('rep/transactions/', representative.rep_transactions, name='rep_transactions'),
+    path('rep/request/', representative.rep_request_transaction, name='rep_request'),
 ]

@@ -7,9 +7,7 @@ from . import (
     inventory,
     partners,
     transactions,
-    fees,
     reports,
-    ai,
 )
 
 __all__ = [
@@ -19,7 +17,5 @@ __all__ = [
     'inventory',
     'partners',
     'transactions',
-    'fees',
     'reports',
-    'ai',
 ]

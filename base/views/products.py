@@ -5,13 +5,14 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.core.paginator import Paginator
+from django.contrib.auth.decorators import login_required
 
 from base.models import Product
 from base.forms import ProductForm
 
 ITEMS_PER_PAGE = 10
 
-
+@login_required
 def products_view(request):
     """Display all products with search and pagination."""
     products = Product.objects.select_related('category').all()
@@ -57,7 +58,7 @@ def get_products_json(page_obj):
         'next_page_number': page_obj.next_page_number() if page_obj.has_next() else None,
     })
 
-
+@login_required
 @require_http_methods(["POST"])
 def add_product(request):
     """Handle adding a new product."""
@@ -72,7 +73,7 @@ def add_product(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
-
+@login_required
 @require_http_methods(["POST", "GET"])
 def edit_product(request, product_id):
     """Handle editing an existing product."""
@@ -101,7 +102,7 @@ def edit_product(request, product_id):
         messages.error(request, f'حدث خطأ أثناء تعديل المنتج {e}')
         return JsonResponse({'success': False, 'error': str(e)})
 
-
+@login_required
 @require_http_methods(["POST"])
 def delete_product(request, product_id):
     """Handle deleting a product."""

@@ -71,7 +71,6 @@ class ProductForm(forms.ModelForm):
 
 
 class UserForm(forms.ModelForm):
-    """Form for creating and editing users (merchants/representatives)."""
     
     class Meta:
         model = User
@@ -117,28 +116,3 @@ class TransactionForm(forms.ModelForm):
             'type': 'النوع',
         }
 
-
-class FeesForm(forms.Form):
-    """Form for adding fees/expenses."""
-    
-    amount = forms.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        min_value=0,
-        widget=forms.NumberInput(attrs={
-            'class': FORM_INPUT_CLASSES_GREEN,
-            'step': '0.01',
-            'placeholder': '0.00'
-        }),
-        label='المبلغ'
-    )
-    description = forms.CharField(
-        max_length=500,
-        required=False,
-        widget=forms.Textarea(attrs={
-            'class': FORM_INPUT_CLASSES_GREEN,
-            'rows': 3,
-            'placeholder': 'وصف المنصرف (اختياري)'
-        }),
-        label='الوصف'
-    )

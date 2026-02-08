@@ -3,12 +3,13 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.core.paginator import Paginator
+from django.contrib.auth.decorators import login_required
 
 from base.models import Product
 
 ITEMS_PER_PAGE = 10
 
-
+@login_required
 def inventory_view(request):
     """Display inventory with search and sorting options."""
     products = Product.objects.select_related('category').all()

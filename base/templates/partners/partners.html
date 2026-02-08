@@ -1,37 +1,15 @@
 
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}
-إدارة 
-{% if partner_type == 'merchant' %}
-التجار  
-{% elif partner_type == 'representative' %}
-المندوبين
-{% endif %}
-{% endblock %}
-{% block page_title %}{% if partner_type == 'merchant' %}التجار{% elif partner_type == 'representative' %}المندوبين{% endif %}{% endblock %}
-{% block page_subtitle %}إدارة حسابات {% if partner_type == 'merchant' %}التجار{% elif partner_type == 'representative' %}المندوبين{% endif %}{% endblock %}
+{% block title %}إدارة المندوبين{% endblock %}
+{% block page_title %}المندوبين{% endblock %}
+{% block page_subtitle %}إدارة حسابات المندوبين{% endblock %}
 
 {% block content %}
 <!-- Partners Table -->
 <div class="bg-white rounded-xl shadow-md border border-slate-200 p-6">
     <div class="flex items-center justify-between mb-6">
-        <h2 class="text-xl font-bold text-slate-800">{% if partner_type == 'merchant' %}قائمة التجار{% elif partner_type == 'representative' %}قائمة المندوبين{% endif %}</h2>
-        
-        <div class="flex items-center gap-4">
-            {% if partner_type == 'merchant' %}
-            <button onclick="AddModalFunction()" class="flex items-center gap-2 justify-between p-2 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 transition-all shadow-md hover:shadow-lg">
-                إضافة 
-                تاجر
-                <i class="fas fa-plus"></i>
-            </button>
-            {% elif partner_type == 'representative' %}
-            <button onclick="AddModalFunction()" class="flex items-center gap-2 justify-between p-2 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:from-purple-600 hover:to-purple-700 transition-all shadow-md hover:shadow-lg">
-                إضافة 
-                مندوب
-                <i class="fas fa-plus"></i>
-            </button>
-            {% endif %}
+  
 
             <!-- Search Form -->
             <form method="GET" class="relative">
@@ -39,7 +17,7 @@
                     type="text" 
                     name="q" 
                     value="{{ request.GET.q|default:'' }}"
-                    placeholder="بحث عن {% if partner_type == 'merchant' %}تاجر{% elif partner_type == 'representative' %}مندوب{% endif %}..." 
+                    placeholder="بحث عن مندوب..." 
                     class="pl-4 pr-10 py-2 rounded-lg border border-slate-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none w-64 transition-all text-right"
                 >
                 <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary-600">
@@ -53,11 +31,10 @@
         <table class="w-full">
             <thead>
                 <tr class="border-b border-slate-200">
-                    <th class="text-right bold py-3 px-4 text-sm font-semibold text-slate-600">{% if partner_type == 'merchant' %}اسم التاجر{% elif partner_type == 'representative' %}اسم المندوب{% endif %}</th>
+                    <th class="text-right bold py-3 px-4 text-sm font-semibold text-slate-600">اسم المندوب</th>
                     <th class="text-right bold py-3 px-4 text-sm font-semibold text-slate-600">رقم الهاتف</th>
                     <th class="text-right bold py-3 px-4 text-sm font-semibold text-slate-600">العنوان</th>
-                    <th class="text-right bold py-3 px-4 text-sm font-semibold text-slate-600">الديون</th>
-                    <th class="text-right bold py-3 px-4 text-sm font-semibold text-slate-600">الدخل</th>
+                    <th class="text-right bold py-3 px-4 text-sm font-semibold text-slate-600">عدد المنتجات</th>
                     <th class="text-center bold py-3 px-4 text-sm font-semibold text-slate-600">الإجراءات</th>
                 </tr>
             </thead>
@@ -83,17 +60,9 @@
                     </td>
                     <td class="py-4 px-4 text-sm text-slate-600">{{ partner.phone }}</td>
                     <td class="py-4 px-4 text-sm text-slate-600">{{ partner.address|truncatechars:30 }}</td>
-                    <td class="py-4 px-4 text-sm text-red-600 font-medium">{{ partner.debt }}</td>
-                    <td class="py-4 px-4 text-sm text-green-600 font-medium">{{ partner.income }}</td>
+                    <td class="py-4 px-4 text-sm text-green-600 font-medium">{{ partner.products_count }}</td>
                     <td class="py-4 px-4 flex items-center justify-center gap-2">
-                        <a href=
-                        {% if partner_type == 'merchant' %}
-                        "{% url 'base:merchant_detail' partner.id %}"
-                        {% elif partner_type == 'representative' %}
-                        "{% url 'base:representative_detail' partner.id %}"
-                        {% endif %}
-                        
-                        class="text-slate-400 hover:text-gray-600 transition-colors" title="عرض">
+                        <a href="{% url 'base:representative_detail' partner.id %}" class="text-slate-400 hover:text-gray-600 transition-colors" title="عرض">
                             <i class="fas fa-eye"></i>
                         </a>
                         <button onclick="EditModalFunction({{ partner.id }})" class="text-slate-400 hover:text-gray-600 transition-colors" title="تعديل">
@@ -135,7 +104,6 @@
 </div>
 </div>
 
-{% include 'partials/partners-modals.html' with partner_type=partner_type %}
 {% endblock %}
 
 {% block extra_js %}
@@ -146,7 +114,7 @@
 const partnerType = '{{ partner_type }}';
 const isMerchant = partnerType === 'merchant';
 const avatarColors = isMerchant ? 'from-orange-400 to-orange-600' : 'from-purple-400 to-purple-600';
-const detailUrl = isMerchant ? '{% url "base:merchants" %}' : '{% url "base:representatives" %}';
+const detailUrl = '{% url "base:representatives" %}';
 
 // Initialize infinite scroll for partners
 const partnersScroll = new InfiniteScroll({

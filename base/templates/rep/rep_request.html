@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}طلب معاملة - إدارة المخزون{% endblock %}
+
+{% block page_title %}طلب معاملة{% endblock %}
+{% block page_subtitle %}إنشاء طلب معاملة جديد{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <!-- Transaction Type Selector -->
+    <div class="bg-white rounded-2xl shadow-md border border-slate-200 p-6 mb-6">
+        <h2 class="text-lg font-bold text-slate-800 mb-4">اختر نوع المعاملة</h2>
+        <div class="grid grid-cols-3 gap-4">
+            <button type="button" onclick="selectType('take')" id="btn-take"
+                class="px-4 py-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 hover:border-red-500 hover:bg-red-50 border-slate-200">
+                <i class="fas fa-shopping-cart text-2xl text-red-500"></i>
+                <span class="font-medium text-slate-700">أخذ</span>
+            </button>
+            <button type="button" onclick="selectType('restore')" id="btn-restore"
+                class="px-4 py-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 hover:border-blue-500 hover:bg-blue-50 border-slate-200">
+                <i class="fas fa-undo text-2xl text-blue-500"></i>
+                <span class="font-medium text-slate-700">إرجاع</span>
+            </button>
+            <button type="button" onclick="selectType('payment')" id="btn-payment"
+                class="px-4 py-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 hover:border-green-500 hover:bg-green-50 border-slate-200">
+                <i class="fas fa-money-bill-wave text-2xl text-green-500"></i>
+                <span class="font-medium text-slate-700">دفع</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Product Form (for take/restore) -->
+    <form method="POST" id="product-form" class="hidden">
+        {% csrf_token %}
+        <input type="hidden" name="transaction_type" id="transaction-type" value="">
+        
+        <div class="bg-white rounded-2xl shadow-md border border-slate-200 p-6">
+            <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2" id="form-title">
+                <i class="fas fa-box text-slate-600"></i>
+                اختر المنتجات
+            </h2>
+            
+            <div id="products-container" class="space-y-4 mb-6">
+                <div class="product-row flex items-center gap-4">
+                    <select name="product" class="flex-1 px-4 py-3 rounded-lg border border-slate-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all text-right">
+                        <option value="skip">اختر منتج...</option>
+                        {% for product in products %}
+                        <option value="{{ product.id }}">{{ product.name }} (متوفر: {{ product.stock }})</option>
+                        {% endfor %}
+                    </select>
+                    <input type="number" name="quantity" placeholder="الكمية" min="1" required
+                        class="w-32 px-4 py-3 rounded-lg border border-slate-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all text-right">
+                </div>
+            </div>
+            
+            <button type="button" onclick="addProductRow()" class="w-full px-4 py-3 rounded-lg border-2 border-dashed border-slate-300 text-slate-600 hover:border-primary-500 hover:text-primary-600 transition-all mb-6">
+                <i class="fas fa-plus ml-2"></i>
+                إضافة منتج آخر
+            </button>
+            
+            <div class="flex gap-4">
+                <button type="submit" class="flex-1 px-6 py-3 rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 text-white font-medium shadow-md hover:shadow-lg transition-all">
+                    <i class="fas fa-paper-plane ml-2"></i>
+                    إرسال الطلب
+                </button>
+                <a href="{% url 'base:rep_dashboard' %}" class="px-6 py-3 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all font-medium">
+                    إلغاء
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <!-- Payment Form -->
+    <form method="POST" id="payment-form" class="hidden">
+        {% csrf_token %}
+        <input type="hidden" name="transaction_type" value="payment">
+        
+        <div class="bg-white rounded-2xl shadow-md border border-slate-200 p-6">
+            <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <i class="fas fa-money-bill-wave text-green-600"></i>
+                تسجيل دفع
+            </h2>
+            
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-slate-700 mb-2">المبلغ <span class="text-red-500">*</span></label>
+                <input type="number" name="amount" step="0.01" min="0.01" required
+                    placeholder="أدخل المبلغ"
+                    class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-all text-right">
+            </div>
+            
+            <div class="flex gap-4">
+                <button type="submit" class="flex-1 px-6 py-3 rounded-lg bg-gradient-to-r from-green-500 to-green-600 text-white font-medium shadow-md hover:shadow-lg transition-all">
+                    <i class="fas fa-check ml-2"></i>
+                    تأكيد الدفع
+                </button>
+                <a href="{% url 'base:rep_dashboard' %}" class="px-6 py-3 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all font-medium">
+                    إلغاء
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+const products = {{ products_list|safe }};
+
+function selectType(type) {
+    // Reset all buttons
+    document.querySelectorAll('[id^="btn-"]').forEach(btn => {
+        btn.classList.remove('border-red-500', 'bg-red-50', 'border-blue-500', 'bg-blue-50', 'border-green-500', 'bg-green-50');
+        btn.classList.add('border-slate-200');
+    });
+    
+    // Highlight selected button
+    const btn = document.getElementById(`btn-${type}`);
+    const colors = {
+        'take': ['border-red-500', 'bg-red-50'],
+        'restore': ['border-blue-500', 'bg-blue-50'],
+        'payment': ['border-green-500', 'bg-green-50']
+    };
+    btn.classList.remove('border-slate-200');
+    btn.classList.add(...colors[type]);
+    
+    // Show appropriate form
+    document.getElementById('product-form').classList.add('hidden');
+    document.getElementById('payment-form').classList.add('hidden');
+    
+    if (type === 'payment') {
+        document.getElementById('payment-form').classList.remove('hidden');
+    } else {
+        document.getElementById('product-form').classList.remove('hidden');
+        document.getElementById('transaction-type').value = type;
+        
+        // Update form title
+        const title = document.getElementById('form-title');
+        if (type === 'take') {
+            title.innerHTML = '<i class="fas fa-shopping-cart text-red-600"></i> اختر المنتجات للأخذ';
+        } else {
+            title.innerHTML = '<i class="fas fa-undo text-blue-600"></i> اختر المنتجات للإرجاع';
+        }
+    }
+}
+
+function addProductRow() {
+    const container = document.getElementById('products-container');
+    const row = document.createElement('div');
+    row.className = 'product-row flex items-center gap-4';
+    
+    let options = '<option value="skip">اختر منتج...</option>';
+    products.forEach(p => {
+        options += `<option value="${p.id}">${p.name} (متوفر: ${p.stock})</option>`;
+    });
+    
+    row.innerHTML = `
+        <select name="product" class="flex-1 px-4 py-3 rounded-lg border border-slate-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all text-right">
+            ${options}
+        </select>
+        <input type="number" name="quantity" placeholder="الكمية" min="1" required
+            class="w-32 px-4 py-3 rounded-lg border border-slate-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all text-right">
+        <button type="button" onclick="removeRow(this)" class="p-2 rounded-lg text-red-500 hover:bg-red-50 transition-all">
+            <i class="fas fa-trash"></i>
+        </button>
+    `;
+    
+    container.appendChild(row);
+}
+
+function removeRow(btn) {
+    btn.parentElement.remove();
+}
+
+// Auto-select type from URL query param
+const urlParams = new URLSearchParams(window.location.search);
+const type = urlParams.get('type');
+if (type && ['take', 'restore', 'payment'].includes(type)) {
+    selectType(type);
+}
+</script>
+{% endblock %}

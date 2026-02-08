@@ -34,14 +34,14 @@
 </div>
 
 <!-- Financial Summary Cards -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <!-- Total Sales -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <!-- Total Taken -->
     <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
         <div class="flex items-center justify-between mb-2">
-            <h3 class="text-sm font-medium opacity-90">إجمالي المبيعات</h3>
+            <h3 class="text-sm font-medium opacity-90">إجمالي الأخذ</h3>
             <i class="fas fa-shopping-cart text-2xl opacity-80"></i>
         </div>
-        <p class="text-3xl font-bold">{{ total_sales|floatformat:2 }} <span class="text-sm font-normal">ج.س</span></p>
+        <p class="text-3xl font-bold">{{ total_taken|floatformat:2 }} <img src="{% static 'images/sar_symbol_dark.svg' %}" class="h-8 inline-block" alt="SAR"></p>
         <p class="text-xs opacity-75 mt-1">{{ transaction_counts.take }} معاملة</p>
     </div>
 
@@ -51,98 +51,18 @@
             <h3 class="text-sm font-medium opacity-90">إجمالي المدفوعات</h3>
             <i class="fas fa-dollar-sign text-2xl opacity-80"></i>
         </div>
-        <p class="text-3xl font-bold">{{ total_payments|floatformat:2 }} <span class="text-sm font-normal">ج.س</span></p>
+        <p class="text-3xl font-bold">{{ total_payments|floatformat:2 }} <img src="{% static 'images/sar_symbol_dark.svg' %}" class="h-8 inline-block" alt="SAR"></p>
         <p class="text-xs opacity-75 mt-1">{{ transaction_counts.payment }} معاملة</p>
     </div>
 
-    <!-- Total Fees -->
-    <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-lg p-6 text-white">
-        <div class="flex items-center justify-between mb-2">
-            <h3 class="text-sm font-medium opacity-90">إجمالي المنصرفات</h3>
-            <i class="fas fa-receipt text-2xl opacity-80"></i>
-        </div>
-        <p class="text-3xl font-bold">{{ total_fees|floatformat:2 }} <span class="text-sm font-normal">ج.س</span></p>
-        <p class="text-xs opacity-75 mt-1">{{ transaction_counts.fees }} معاملة</p>
-    </div>
-
-    <!-- Net Profit -->
+    <!-- Total Restores -->
     <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
         <div class="flex items-center justify-between mb-2">
-            <h3 class="text-sm font-medium opacity-90">صافي الربح</h3>
-            <i class="fas fa-chart-line text-2xl opacity-80"></i>
+            <h3 class="text-sm font-medium opacity-90">إجمالي المرجعات</h3>
+            <i class="fas fa-undo text-2xl opacity-80"></i>
         </div>
-        <p class="text-3xl font-bold">{{ net_profit|floatformat:2 }} <span class="text-sm font-normal">ج.س</span></p>
-        <p class="text-xs opacity-75 mt-1">المدفوعات - المنصرفات</p>
-    </div>
-</div>
-
-<!-- Outstanding Debt & Restores -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-    <div class="bg-white rounded-xl shadow-md border border-slate-200 p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <i class="fas fa-exclamation-triangle text-orange-500"></i>
-                إجمالي الديون المستحقة
-            </h3>
-        </div>
-        <p class="text-4xl font-bold text-orange-600">{{ total_debt|floatformat:2 }} <span class="text-lg text-slate-500">ج.س</span></p>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-md border border-slate-200 p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <i class="fas fa-undo text-blue-500"></i>
-                إجمالي المرتجعات
-            </h3>
-        </div>
-        <p class="text-4xl font-bold text-blue-600">{{ total_restores|floatformat:2 }} <span class="text-lg text-slate-500">ج.س</span></p>
-        <p class="text-sm text-slate-500 mt-1">{{ transaction_counts.restore }} معاملة</p>
-    </div>
-</div>
-
-<!-- Top Merchants -->
-<div class="bg-white rounded-xl shadow-md border border-slate-200 p-6 mb-8">
-    <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-        <i class="fas fa-trophy text-yellow-500"></i>
-        أفضل التجار
-    </h2>
-    <div class="overflow-x-auto">
-        <table class="w-full">
-            <thead>
-                <tr class="bg-slate-50 border-b-2 border-slate-200">
-                    <th class="text-right py-3 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider">الترتيب</th>
-                    <th class="text-right py-3 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider">التاجر</th>
-                    <th class="text-right py-3 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider">إجمالي المبيعات</th>
-                    <th class="text-right py-3 px-4 text-xs font-bold text-slate-700 uppercase tracking-wider">الدين الحالي</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100">
-                {% for merchant in top_merchants %}
-                <tr class="hover:bg-slate-50 transition-all">
-                    <td class="py-4 px-4">
-                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-500 text-white font-bold text-sm">
-                            {{ forloop.counter }}
-                        </span>
-                    </td>
-                    <td class="py-4 px-4">
-                        <a href="{% url 'base:merchant_report' merchant.id %}" class="font-semibold text-slate-800 hover:text-blue-600 transition-colors">
-                            {{ merchant.get_full_name|default:merchant.username }}
-                        </a>
-                    </td>
-                    <td class="py-4 px-4">
-                        <span class="text-lg font-bold text-green-600">{{ merchant.total_sales|floatformat:2 }} ج.س</span>
-                    </td>
-                    <td class="py-4 px-4">
-                        <span class="text-lg font-bold text-orange-600">{{ merchant.debt|floatformat:2 }} ج.س</span>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4" class="py-8 text-center text-slate-500">لا توجد بيانات</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <p class="text-3xl font-bold">{{ total_restores|floatformat:2 }} <img src="{% static 'images/sar_symbol_dark.svg' %}" class="h-8 inline-block" alt="SAR"></p>
+        <p class="text-xs opacity-75 mt-1">{{ transaction_counts.restore }} معاملة</p>
     </div>
 </div>
 
@@ -174,7 +94,7 @@
                         <span class="text-lg font-bold text-blue-600">{{ product.total_quantity }}</span>
                     </td>
                     <td class="py-4 px-4">
-                        <span class="text-lg font-bold text-green-600">{{ product.total_revenue|floatformat:2 }} ج.س</span>
+                        <span class="text-lg font-bold text-green-600">{{ product.total_revenue|floatformat:2 }} <img src="{% static 'images/sar_symbol_dark.svg' %}" class="h-5 inline-block" alt="SAR"></span>
                     </td>
                     <td class="py-4 px-4">
                         <span class="text-lg font-bold {% if product.stock <= 10 %}text-red-600{% else %}text-slate-700{% endif %}">
@@ -208,7 +128,7 @@
                     <p class="text-sm text-slate-500">{{ category.total_quantity }} وحدة</p>
                 </div>
                 <div class="text-left">
-                    <p class="text-lg font-bold text-green-600">{{ category.total_sales|floatformat:2 }} ج.س</p>
+                    <p class="text-lg font-bold text-green-600">{{ category.total_sales|floatformat:2 }} <img src="{% static 'images/sar_symbol_dark.svg' %}" class="h-5 inline-block" alt="SAR"></p>
                 </div>
             </div>
             {% empty %}

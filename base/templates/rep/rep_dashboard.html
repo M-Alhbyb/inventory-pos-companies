@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}لوحة المندوب - إدارة المخزون{% endblock %}
+
+{% block page_title %}لوحة التحكم{% endblock %}
+{% block page_subtitle %}مرحباً {{ request.user.get_full_name|default:request.user.username }}{% endblock %}
+
+{% block content %}
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Products Count -->
+    <div class="bg-white rounded-xl shadow-md p-6 border border-purple-200 hover:shadow-lg transition-all group">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-xs font-medium text-purple-600 mb-1">المنتجات لديك</p>
+                <h3 class="text-3xl font-bold text-purple-700">{{ products_count }}</h3>
+            </div>
+            <div class="w-14 h-14 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow group-hover:scale-110 transition-transform">
+                <i class="fas fa-boxes text-white text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Take Count -->
+    <div class="bg-white rounded-xl shadow-md p-6 border border-red-200 hover:shadow-lg transition-all group">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-xs font-medium text-red-600 mb-1">معاملات الأخذ</p>
+                <h3 class="text-3xl font-bold text-red-700">{{ take_count }}</h3>
+            </div>
+            <div class="w-14 h-14 rounded-lg bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow group-hover:scale-110 transition-transform">
+                <i class="fas fa-shopping-cart text-white text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Restore Count -->
+    <div class="bg-white rounded-xl shadow-md p-6 border border-blue-200 hover:shadow-lg transition-all group">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-xs font-medium text-blue-600 mb-1">معاملات الإرجاع</p>
+                <h3 class="text-3xl font-bold text-blue-700">{{ restore_count }}</h3>
+            </div>
+            <div class="w-14 h-14 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow group-hover:scale-110 transition-transform">
+                <i class="fas fa-undo text-white text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Count -->
+    <div class="bg-white rounded-xl shadow-md p-6 border border-green-200 hover:shadow-lg transition-all group">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-xs font-medium text-green-600 mb-1">معاملات الدفع</p>
+                <h3 class="text-3xl font-bold text-green-700">{{ payment_count }}</h3>
+            </div>
+            <div class="w-14 h-14 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow group-hover:scale-110 transition-transform">
+                <i class="fas fa-money-bill-wave text-white text-xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="bg-white rounded-2xl shadow-md border border-slate-200 p-6 mb-8">
+    <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+        <i class="fas fa-bolt text-yellow-500"></i>
+        إجراءات سريعة
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <a href="{% url 'base:rep_request' %}?type=take" class="px-6 py-4 rounded-xl bg-gradient-to-br from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-3">
+            <i class="fas fa-shopping-cart text-2xl"></i>
+            <span class="font-bold text-lg">طلب أخذ منتجات</span>
+        </a>
+        <a href="{% url 'base:rep_request' %}?type=restore" class="px-6 py-4 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-3">
+            <i class="fas fa-undo text-2xl"></i>
+            <span class="font-bold text-lg">طلب إرجاع منتجات</span>
+        </a>
+        <a href="{% url 'base:rep_request' %}?type=payment" class="px-6 py-4 rounded-xl bg-gradient-to-br from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-3">
+            <i class="fas fa-money-bill-wave text-2xl"></i>
+            <span class="font-bold text-lg">طلب تسجيل دفع</span>
+        </a>
+    </div>
+</div>
+
+<!-- Recent Transactions -->
+<div class="bg-white rounded-2xl shadow-md border border-slate-200 p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+            <i class="fas fa-history text-slate-600"></i>
+            آخر المعاملات
+        </h2>
+        <a href="{% url 'base:rep_transactions' %}" class="text-primary-600 hover:text-primary-700 font-medium text-sm flex items-center gap-1">
+            عرض الكل
+            <i class="fas fa-arrow-left"></i>
+        </a>
+    </div>
+
+    {% if recent_transactions %}
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr class="bg-slate-50 border-b-2 border-slate-200">
+                    <th class="text-right py-3 px-4 text-xs font-bold text-slate-700 uppercase">#</th>
+                    <th class="text-right py-3 px-4 text-xs font-bold text-slate-700 uppercase">النوع</th>
+                    <th class="text-right py-3 px-4 text-xs font-bold text-slate-700 uppercase">المبلغ</th>
+                    <th class="text-right py-3 px-4 text-xs font-bold text-slate-700 uppercase">التاريخ</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for transaction in recent_transactions %}
+                <tr class="hover:bg-slate-50 transition-all">
+                    <td class="py-4 px-4">
+                        <span class="font-bold text-slate-800">{{ transaction.id }}</span>
+                    </td>
+                    <td class="py-4 px-4">
+                        {% if transaction.type == 'take' %}
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-200">
+                            <i class="fas fa-shopping-cart"></i>
+                            أخذ
+                        </span>
+                        {% elif transaction.type == 'restore' %}
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-200">
+                            <i class="fas fa-undo"></i>
+                            إرجاع
+                        </span>
+                        {% elif transaction.type == 'payment' %}
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 border border-green-200">
+                            <i class="fas fa-money-bill-wave"></i>
+                            دفع
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="py-4 px-4">
+                        {% if transaction.amount %}
+                        <span class="text-lg font-bold text-slate-800">{{ transaction.amount|floatformat:2 }}</span>
+                        <img src="{% static 'images/sar_symbol_dark.svg' %}" class="h-4 inline-block" alt="SAR">
+                        {% else %}
+                        <span class="text-slate-400">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="py-4 px-4">
+                        <span class="text-sm text-slate-600">{{ transaction.date|date:"Y/m/d" }}</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-12">
+        <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-inbox text-slate-400 text-2xl"></i>
+        </div>
+        <p class="text-slate-500 font-medium">لا توجد معاملات حتى الآن</p>
+        <p class="text-slate-400 text-sm mt-1">ابدأ بطلب معاملة جديدة</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

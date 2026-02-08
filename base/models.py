@@ -30,19 +30,9 @@ class Product(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    estimated_stock_out = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.name
-
-    @property
-    def days_until_stock_out(self):
-        """Calculate days until estimated stock out."""
-        if self.estimated_stock_out:
-            from django.utils import timezone
-            delta = self.estimated_stock_out - timezone.now()
-            return max(delta.days, 0)
-        return None
 
     class Meta:
         verbose_name = "المنتج"
@@ -50,24 +40,22 @@ class Product(models.Model):
 
 
 USER_TYPES = (
-    ('admin', 'مشرف'),
-    ('merchant', 'تاجر'),
+    ('accountant', 'محاسب'),
     ('representative', 'مندوب')
 )
 
 
 class User(AbstractUser):
-    """Custom user model with extended fields for merchants and representatives."""
+    """Custom user model for accountants and representatives."""
     
     phone = models.CharField(max_length=255)
     address = models.TextField()
     user_type = models.CharField(
         max_length=20,
         choices=USER_TYPES,
-        default=USER_TYPES[0][0],
+        default='representative',
         blank=False
     )
-    debt = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     products_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -83,8 +71,13 @@ class User(AbstractUser):
 TRANSACTION_TYPES = (
     ('take', 'أخذ'),
     ('payment', 'دفع'),
-    ('restore', 'إرجاع'),
-    ('fees', 'منصرف')
+    ('restore', 'إرجاع')
+)
+
+TRANSACTION_STATUS = (
+    ('pending', 'معلق'),
+    ('approved', 'موافق'),
+    ('rejected', 'مرفوض')
 )
 
 
@@ -104,6 +97,7 @@ class Transaction(models.Model):
     )
     amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
+    status = models.CharField(max_length=10, choices=TRANSACTION_STATUS, default='pending')
     date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -116,7 +110,7 @@ class Transaction(models.Model):
         self.update_totals()
 
     def update_totals(self):
-        """Update transaction amount and user debt/product counts."""
+        """Update transaction amount and user product counts."""
         # Update amount by calculating total from TransactionItems for 'take' and 'restore'
         if self.type in ['take', 'restore']:
             total = self.items.aggregate(total=Sum('total'))['total']
@@ -125,21 +119,48 @@ class Transaction(models.Model):
             self.products.set(product_ids)
             Transaction.objects.filter(pk=self.pk).update(amount=self.amount)
 
-        # Update user debt for merchants
-        if self.user and self.user.user_type == 'merchant':
-            if self.type == 'take':
-                self.user.debt += self.amount if self.amount else Decimal('0.00')
-            elif self.type == 'payment':
-                self.user.debt -= self.amount if self.amount else Decimal('0.00')
-            self.user.save()
-
-        # Update products_count for all users based on current transaction items
-        if self.user:
+        # Only update products_count if transaction is approved
+        if self.user and self.status == 'approved':
             self._update_user_products_count()
 
+    def approve(self):
+        """Approve the transaction and apply stock changes."""
+        if self.status != 'pending':
+            return False
+        
+        self.status = 'approved'
+        self.save()
+        
+        # Apply stock changes for all items
+        for item in self.items.all():
+            if item.product:
+                if self.type == 'take':
+                    item.product.stock -= item.quantity
+                elif self.type == 'restore':
+                    item.product.stock += item.quantity
+                item.product.save()
+        
+        # Update user's products_count
+        if self.user:
+            self._update_user_products_count()
+        
+        return True
+
+    def reject(self):
+        """Reject the transaction."""
+        if self.status != 'pending':
+            return False
+        
+        self.status = 'rejected'
+        self.save()
+        return True
+
     def _update_user_products_count(self, exclude_self=False):
-        """Helper method to recalculate user's product count."""
-        base_query = TransactionItem.objects.filter(transaction__user=self.user)
+        """Helper method to recalculate user's product count based on approved transactions."""
+        base_query = TransactionItem.objects.filter(
+            transaction__user=self.user,
+            transaction__status='approved'
+        )
         
         if exclude_self:
             base_query = base_query.exclude(transaction=self)
@@ -156,27 +177,20 @@ class Transaction(models.Model):
         self.user.save()
 
     def delete(self, *args, **kwargs):
-        """Reverse stock and debt changes when deleting a transaction."""
-        # Reverse stock changes for all items in this transaction
-        for item in self.items.all():
-            if item.product:
-                if self.type == 'take':
-                    item.product.stock += item.quantity
-                elif self.type == 'restore':
-                    item.product.stock -= item.quantity
-                item.product.save()
+        """Reverse stock changes when deleting an approved transaction."""
+        # Only reverse stock if transaction was approved
+        if self.status == 'approved':
+            for item in self.items.all():
+                if item.product:
+                    if self.type == 'take':
+                        item.product.stock += item.quantity
+                    elif self.type == 'restore':
+                        item.product.stock -= item.quantity
+                    item.product.save()
 
-        # Reverse debt changes for merchants
-        if self.user and self.user.user_type == 'merchant':
-            if self.type == 'take':
-                self.user.debt -= self.amount if self.amount else Decimal('0.00')
-            elif self.type == 'payment':
-                self.user.debt += self.amount if self.amount else Decimal('0.00')
-            self.user.save()
-
-        # Update products_count after deletion
-        if self.user:
-            self._update_user_products_count(exclude_self=True)
+            # Update products_count after deletion
+            if self.user:
+                self._update_user_products_count(exclude_self=True)
 
         super().delete(*args, **kwargs)
 
@@ -219,14 +233,16 @@ class TransactionItem(models.Model):
             self.price = self.product.price
             self.total = Decimal(self.price) * Decimal(self.quantity)
 
-            # Only adjust stock if quantity changed
-            quantity_diff = self.quantity - old_quantity
-            if quantity_diff != 0:
-                if self.transaction.type == 'take':
-                    self.product.stock -= quantity_diff
-                elif self.transaction.type == 'restore':
-                    self.product.stock += quantity_diff
-                self.product.save()
+            # Only adjust stock if transaction is already approved (for edits)
+            # New pending transactions won't adjust stock here
+            if self.transaction.status == 'approved':
+                quantity_diff = self.quantity - old_quantity
+                if quantity_diff != 0:
+                    if self.transaction.type == 'take':
+                        self.product.stock -= quantity_diff
+                    elif self.transaction.type == 'restore':
+                        self.product.stock += quantity_diff
+                    self.product.save()
 
         super().save(*args, **kwargs)
 
@@ -235,8 +251,9 @@ class TransactionItem(models.Model):
             self.transaction.update_totals()
 
     def delete(self, *args, **kwargs):
-        """Reverse stock changes when deleting an item."""
-        if self.product:
+        """Reverse stock changes when deleting an item from approved transaction."""
+        # Only reverse stock if transaction is approved
+        if self.product and self.transaction.status == 'approved':
             if self.transaction.type == 'take':
                 self.product.stock += self.quantity
             elif self.transaction.type == 'restore':

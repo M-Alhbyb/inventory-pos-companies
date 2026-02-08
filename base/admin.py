@@ -25,7 +25,7 @@ class ProductAdmin(admin.ModelAdmin):
 class UserAdmin(admin.ModelAdmin):
     """Admin configuration for User model."""
     
-    list_display = ('username', 'user_type', 'first_name', 'last_name', 'phone', 'debt')
+    list_display = ('username', 'user_type', 'first_name', 'last_name', 'phone', 'products_count')
     list_filter = ('user_type',)
     search_fields = ('username', 'first_name', 'last_name', 'phone')
     ordering = ('username',)

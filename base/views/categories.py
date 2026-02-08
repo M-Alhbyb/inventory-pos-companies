@@ -5,12 +5,13 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.core.paginator import Paginator
+from django.contrib.auth.decorators import login_required
 
 from base.models import Category
 
 ITEMS_PER_PAGE = 10
 
-
+@login_required
 def categories_view(request):
     """Display all categories with search and pagination."""
     categories = Category.objects.all()
@@ -52,7 +53,7 @@ def get_categories_json(page_obj):
         'next_page_number': page_obj.next_page_number() if page_obj.has_next() else None,
     })
 
-
+@login_required
 @require_http_methods(["POST"])
 def add_category(request):
     """Handle adding a new category."""
@@ -88,7 +89,7 @@ def add_category(request):
         messages.error(request, f'حدث خطأ أثناء إضافة الفئة {e}')
         return JsonResponse({'success': False, 'error': str(e)})
 
-
+@login_required
 @require_http_methods(["POST"])
 def edit_category(request, category_id):
     """Handle editing an existing category."""
@@ -128,7 +129,7 @@ def edit_category(request, category_id):
         messages.error(request, f'حدث خطأ أثناء تعديل الفئة {e}')
         return JsonResponse({'success': False, 'error': str(e)})
 
-
+@login_required
 @require_http_methods(["POST"])
 def delete_category(request, category_id):
     """Handle deleting a category."""

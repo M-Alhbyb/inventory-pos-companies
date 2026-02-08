@@ -9,6 +9,7 @@ from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.db import transaction as db_transaction
 from django.core.paginator import Paginator
+from django.contrib.auth.decorators import login_required
 
 from base.models import User, Product, Transaction, TransactionItem
 from base.forms import UserForm
@@ -26,7 +27,7 @@ def get_partner_type_display(partner_type):
     """Get the Arabic display name for a partner type."""
     return PARTNER_TYPE_DISPLAY.get(partner_type, '')
 
-
+@login_required
 def partners_view(request, partner_type):
     """Display all partners of a given type with search and pagination."""
     partners = User.objects.filter(user_type=partner_type)
@@ -84,7 +85,7 @@ def get_partners_json(page_obj, partner_type):
         'next_page_number': page_obj.next_page_number() if page_obj.has_next() else None,
     })
 
-
+@login_required
 @require_http_methods(["POST"])
 def add_partner(request, partner_type):
     """Handle adding a new partner."""
@@ -106,7 +107,7 @@ def add_partner(request, partner_type):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
-
+@login_required
 @require_http_methods(["POST", "GET"])
 def edit_partner(request, partner_id):
     """Handle editing an existing partner."""
@@ -133,7 +134,7 @@ def edit_partner(request, partner_id):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
-
+@login_required
 @require_http_methods(["POST"])
 def delete_partner(request, partner_id):
     """Handle deleting a partner."""
@@ -148,7 +149,7 @@ def delete_partner(request, partner_id):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
-
+@login_required
 def partner_detail(request, partner_id):
     """Display partner details and handle transactions."""
     partner = get_object_or_404(User, id=partner_id)
@@ -186,7 +187,7 @@ def _handle_partner_transaction(request, partner, partner_id):
             messages.success(request, 'تم سداد المبلغ بنجاح')
         else:
             messages.error(request, 'يجب إدخال المبلغ')
-        return redirect('base:partner_detail', partner_id)
+        return redirect('base:representative_detail', partner_id)
 
     # Handle Product Transactions (Take/Restore)
     if transaction_type in ['take', 'restore']:
@@ -196,7 +197,7 @@ def _handle_partner_transaction(request, partner, partner_id):
         # Validate at least one product selected
         if len(product_ids) == 1 and product_ids[0] == "skip":
             messages.error(request, 'يجب اختيار منتج')
-            return redirect('base:partner_detail', partner_id)
+            return redirect('base:representative_detail', partner_id)
         
         transaction = Transaction.objects.create(user=partner, type=transaction_type)
         
@@ -211,7 +212,7 @@ def _handle_partner_transaction(request, partner, partner_id):
             if transaction_type == 'take' and product.stock < quantity:
                 messages.error(request, f'الكمية المطلوبة من {product.name} غير متوفرة')
                 transaction.delete()
-                return redirect('base:partner_detail', partner_id)
+                return redirect('base:representative_detail', partner_id)
             
             TransactionItem.objects.create(
                 transaction=transaction,
@@ -220,11 +221,11 @@ def _handle_partner_transaction(request, partner, partner_id):
             )
         
         messages.success(request, 'تم إضافة المعاملة بنجاح')
-        return redirect('base:partner_detail', partner_id)
+        return redirect('base:representative_detail', partner_id)
     
-    return redirect('base:partner_detail', partner_id)
+    return redirect('base:representative_detail', partner_id)
 
-
+@login_required
 @require_http_methods(["POST"])
 def delete_transaction(request, partner_id, transaction_id):
     """Delete a transaction and reverse all stock/debt changes."""

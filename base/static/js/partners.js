@@ -1,217 +1,3 @@
-// Add Partner Modal
-function AddModalFunction() {
-  const modal = document.getElementById("addPartnerModal");
-  const form = document.getElementById("addPartnerForm");
-  const closeBtn = document.getElementById("closeAddPartnerModal");
-  const cancelBtn = document.getElementById("cancelAddPartner");
-  const errorMessage = document.getElementById("addErrorMessage");
-
-  // Open modal
-  modal.classList.remove("hidden");
-  modal.classList.add("flex");
-  document.body.style.overflow = "hidden";
-
-  // Close modal function
-  function closeModal() {
-    modal.classList.add("hidden");
-    modal.classList.remove("flex");
-    document.body.style.overflow = "auto";
-    form.reset();
-    errorMessage.classList.add("hidden");
-  }
-
-  // Event listeners
-  closeBtn.onclick = closeModal;
-  cancelBtn.onclick = closeModal;
-
-  modal.onclick = (e) => {
-    if (e.target === modal) closeModal();
-  };
-
-  // Form submission
-  form.onsubmit = async (e) => {
-    e.preventDefault();
-    const formData = new FormData(form);
-
-    try {
-      const response = await fetch(form.action, {
-        method: "POST",
-        body: formData,
-        headers: {
-          "X-Requested-With": "XMLHttpRequest",
-        },
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        closeModal();
-        location.reload();
-      } else {
-        errorMessage.textContent = data.error || "حدث خطأ غير متوقع";
-        errorMessage.classList.remove("hidden");
-      }
-    } catch (error) {
-      errorMessage.textContent = "حدث خطأ في الاتصال بالخادم";
-      errorMessage.classList.remove("hidden");
-    }
-  };
-}
-
-// Edit Partner Modal
-function EditModalFunction(partnerId) {
-  const modal = document.getElementById("editPartnerModal");
-  const form = document.getElementById("editPartnerForm");
-  const closeBtn = document.getElementById("closeEditPartnerModal");
-  const cancelBtn = document.getElementById("cancelEditPartner");
-  const errorMessage = document.getElementById("editErrorMessage");
-
-  // Open modal
-  modal.classList.remove("hidden");
-  modal.classList.add("flex");
-  document.body.style.overflow = "hidden";
-
-  // GET data
-  async function getData() {
-    const formData = new FormData(form);
-    try {
-      const response = await fetch(`/partners/edit/${partnerId}/`, {
-        method: "GET",
-        headers: {
-          "X-Requested-With": "XMLHttpRequest",
-        },
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        for (const [key, value] of Object.entries(data.fields)) {
-          const input = document.getElementById(`id_edit-${key}`);
-          if (input) {
-            input.value = value;
-          }
-        }
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  getData();
-
-  // Close modal function
-  function closeModal() {
-    modal.classList.add("hidden");
-    modal.classList.remove("flex");
-    document.body.style.overflow = "auto";
-    form.reset();
-    errorMessage.classList.add("hidden");
-  }
-
-  // Event listeners
-  closeBtn.onclick = closeModal;
-  cancelBtn.onclick = closeModal;
-
-  modal.onclick = (e) => {
-    if (e.target === modal) closeModal();
-  };
-
-  // Form submission
-  form.onsubmit = async (e) => {
-    e.preventDefault();
-    const formData = new FormData(form);
-
-    try {
-      const response = await fetch(`/partners/edit/${partnerId}/`, {
-        method: "POST",
-        body: formData,
-        headers: {
-          "X-Requested-With": "XMLHttpRequest",
-        },
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        closeModal();
-        location.reload();
-      } else {
-        errorMessage.textContent = data.error || "حدث خطأ غير متوقع";
-        errorMessage.classList.remove("hidden");
-      }
-    } catch (error) {
-      errorMessage.textContent = "حدث خطأ في الاتصال بالخادم";
-      errorMessage.classList.remove("hidden");
-    }
-  };
-}
-
-// Delete partner Modal
-function DeleteModalFunction(partnerId) {
-  const modal = document.getElementById("deletePartnerModal");
-  const form = document.getElementById("deletePartnerForm");
-  const closeBtn = document.getElementById("closeDeletePartnerModal");
-  const cancelBtn = document.getElementById("cancelDeletePartner");
-  const errorMessage = document.getElementById("deleteErrorMessage");
-  const nameSpan = document.getElementById("deletePartnerName");
-
-  // Get partner name
-  const name = document
-    .querySelector(`.partner-fullname-${partnerId}`)
-    .textContent.trim();
-  nameSpan.textContent = name;
-
-  // Open modal
-  modal.classList.remove("hidden");
-  modal.classList.add("flex");
-  document.body.style.overflow = "hidden";
-
-  // Close modal function
-  function closeModal() {
-    modal.classList.add("hidden");
-    modal.classList.remove("flex");
-    document.body.style.overflow = "auto";
-    errorMessage.classList.add("hidden");
-  }
-
-  // Event listeners
-  closeBtn.onclick = closeModal;
-  cancelBtn.onclick = closeModal;
-
-  modal.onclick = (e) => {
-    if (e.target === modal) closeModal();
-  };
-
-  // Form submission
-  form.onsubmit = async (e) => {
-    e.preventDefault();
-    const formData = new FormData(form);
-
-    try {
-      const response = await fetch(`/partners/delete/${partnerId}/`, {
-        method: "POST",
-        body: formData,
-        headers: {
-          "X-Requested-With": "XMLHttpRequest",
-        },
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        closeModal();
-        location.reload();
-      } else {
-        errorMessage.textContent = data.error || "حدث خطأ غير متوقع";
-        errorMessage.classList.remove("hidden");
-      }
-    } catch (error) {
-      errorMessage.textContent = "حدث خطأ في الاتصال بالخادم";
-      errorMessage.classList.remove("hidden");
-    }
-  };
-}
-
 function addProductField(products) {
   const container = document.getElementById("products-fields");
   const newField = document.createElement("div");
@@ -415,20 +201,23 @@ document.addEventListener("DOMContentLoaded", function () {
     deleteForm.addEventListener("submit", function (e) {
       e.preventDefault();
       const transactionId = document.getElementById(
-        "deleteTransactionId"
+        "deleteTransactionId",
       ).value;
       const partnerId = window.location.pathname.split("/")[2]; // Extract partner ID from URL
       const csrfToken = document.querySelector(
-        "[name=csrfmiddlewaretoken]"
+        "[name=csrfmiddlewaretoken]",
       ).value;
 
-      fetch(`/partners/${partnerId}/transaction/${transactionId}/delete/`, {
-        method: "POST",
-        headers: {
-          "X-CSRFToken": csrfToken,
-          "Content-Type": "application/json",
+      fetch(
+        `/representatives/${partnerId}/transaction/${transactionId}/delete/`,
+        {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+            "Content-Type": "application/json",
+          },
         },
-      })
+      )
         .then((response) => response.json())
         .then((data) => {
           if (data.success) {

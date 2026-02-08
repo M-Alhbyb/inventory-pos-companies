@@ -7,11 +7,12 @@ from django.shortcuts import render, get_object_or_404
 from django.db.models import Sum, Count, Q
 from django.db.models.functions import TruncDate
 from django.utils import timezone
+from django.contrib.auth.decorators import login_required
 
 from base.models import Transaction, TransactionItem, Product, User, Category
 from base.constants import FirstDayOfMonth
 
-
+@login_required
 def reports_view(request):
     """Display comprehensive reports with date filtering."""
     # Parse date range
@@ -34,36 +35,17 @@ def reports_view(request):
             type=trans_type, **date_filter
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
     
-    total_sales = get_transaction_total('take')
+    total_taken = get_transaction_total('take')
     total_payments = get_transaction_total('payment')
-    total_fees = get_transaction_total('fees')
     total_restores = get_transaction_total('restore')
-    
-    # Net profit calculation (payments - fees)
-    net_profit = total_payments - total_fees
-    
-    # Outstanding debt
-    total_debt = User.objects.filter(
-        user_type='merchant'
-    ).aggregate(total=Sum('debt'))['total'] or Decimal('0.00')
     
     # Transaction counts
     transaction_counts = {
         trans_type: Transaction.objects.filter(type=trans_type, **date_filter).count()
-        for trans_type in ['take', 'payment', 'restore', 'fees']
+        for trans_type in ['take', 'payment', 'restore']
     }
     
-    # Top merchants by sales
-    top_merchants = User.objects.filter(
-        user_type='merchant',
-        transactions__type='take',
-        transactions__date__gte=start_date,
-        transactions__date__lte=end_date
-    ).annotate(
-        total_sales=Sum('transactions__amount')
-    ).order_by('-total_sales')[:5]
-    
-    # Top products by quantity sold
+    # Top products by quantity taken
     top_products = Product.objects.filter(
         transaction_items__transaction__type='take',
         transaction_items__transaction__date__gte=start_date,
@@ -119,14 +101,10 @@ def reports_view(request):
     return render(request, 'reports.html', {
         'start_date': start_date,
         'end_date': end_date,
-        'total_sales': total_sales,
+        'total_taken': total_taken,
         'total_payments': total_payments,
-        'total_fees': total_fees,
         'total_restores': total_restores,
-        'net_profit': net_profit,
-        'total_debt': total_debt,
         'transaction_counts': transaction_counts,
-        'top_merchants': top_merchants,
         'top_products': top_products,
         'daily_trends': daily_trends,
         'category_performance': category_performance,
@@ -134,37 +112,39 @@ def reports_view(request):
         'top_representatives': top_representatives,
     })
 
-
-def merchant_report(request, merchant_id):
-    """Detailed report for a specific merchant."""
-    merchant = get_object_or_404(User, id=merchant_id, user_type='merchant')
+@login_required
+def representative_report(request, representative_id):
+    """Detailed report for a specific representative."""
+    representative = get_object_or_404(User, id=representative_id, user_type='representative')
     
-    # Get all transactions for this merchant
-    transactions = Transaction.objects.filter(user=merchant).order_by('-date')
+    # Get all transactions for this representative
+    transactions = Transaction.objects.filter(user=representative).order_by('-date')
     
     # Calculate totals
     total_taken = transactions.filter(type='take').aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
     total_paid = transactions.filter(type='payment').aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+    total_restored = transactions.filter(type='restore').aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
     
-    # Products taken by merchant
+    # Products taken by representative
     products_taken = TransactionItem.objects.filter(
-        transaction__user=merchant,
+        transaction__user=representative,
         transaction__type='take'
     ).values('product__name').annotate(
         total_quantity=Sum('quantity'),
         total_amount=Sum('total')
     ).order_by('-total_quantity')
     
-    return render(request, 'merchant_report.html', {
-        'merchant': merchant,
+    return render(request, 'representative_report.html', {
+        'representative': representative,
         'transactions': transactions,
         'total_taken': total_taken,
         'total_paid': total_paid,
-        'current_debt': merchant.debt,
+        'total_restored': total_restored,
         'products_taken': products_taken,
+        'products_count': representative.products_count,
     })
 
-
+@login_required
 def product_report(request, product_id):
     """Detailed report for a specific product."""
     product = get_object_or_404(Product, id=product_id)
@@ -187,8 +167,9 @@ def product_report(request, product_id):
         transaction__type='take'
     ).aggregate(total=Sum('total'))['total'] or Decimal('0.00')
     
-    # Top customers for this product
-    top_customers = User.objects.filter(
+    # Top representatives for this product
+    top_representatives = User.objects.filter(
+        user_type='representative',
         transactions__items__product=product,
         transactions__type='take'
     ).annotate(
@@ -201,5 +182,6 @@ def product_report(request, product_id):
         'total_taken': total_taken,
         'total_restored': total_restored,
         'total_revenue': total_revenue,
-        'top_customers': top_customers,
+        'top_representatives': top_representatives,
     })
+

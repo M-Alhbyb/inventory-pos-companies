@@ -5,6 +5,7 @@ from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
 from django.core.paginator import Paginator
+from django.contrib.auth.decorators import login_required
 from tablib import Dataset
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
@@ -14,9 +15,13 @@ from base.resources import TransactionResource
 
 ITEMS_PER_PAGE = 10
 
-
+@login_required
 def transactions_view(request):
     """Display all transactions with filtering, search, and pagination."""
+    # Redirect representatives to their own transactions page
+    if request.user.user_type == 'representative':
+        return redirect('base:rep_transactions')
+    
     transactions = Transaction.objects.select_related('user').prefetch_related('items__product').order_by('-date')
     
     # Handle search
@@ -46,7 +51,13 @@ def transactions_view(request):
         'total_payment': transactions.filter(type='payment').count(),
         'total_restore': transactions.filter(type='restore').count(),
         'total_fees': transactions.filter(type='fees').count(),
+        'total_pending': transactions.filter(status='pending').count(),
     }
+    
+    # Handle status filter
+    status = request.GET.get('status')
+    if status and status != 'all':
+        transactions = transactions.filter(status=status)
 
     # Handle POST requests (export/import)
     if request.method == 'POST':
@@ -69,6 +80,7 @@ def transactions_view(request):
         **stats,
         'current_type': transaction_type or 'all',
         'current_user_type': user_type or 'all',
+        'current_status': status or 'all',
         'search_query': q or '',
     }
     
@@ -91,6 +103,7 @@ def get_more_data_json(page_obj):
         
         data.append({
             'id': transaction.id,
+            'user_id': transaction.user.id if transaction.user else None,
             'user': transaction.user.username if transaction.user else None,
             'user_type': transaction.user.user_type if transaction.user else None,
             'user_full_name': transaction.user.get_full_name() if transaction.user else None,
@@ -207,5 +220,43 @@ def import_transactions(request):
             
     except Exception as e:
         messages.error(request, f'فشل الاستيراد: {str(e)}')
+    
+    return redirect('base:transactions')
+
+
+@login_required
+def approve_transaction(request, transaction_id):
+    """Approve a pending transaction (accountant only)."""
+    if request.user.user_type != 'accountant':
+        messages.error(request, 'غير مصرح لك بهذا الإجراء.')
+        return redirect('base:transactions')
+    
+    try:
+        transaction = Transaction.objects.get(pk=transaction_id)
+        if transaction.approve():
+            messages.success(request, f'تمت الموافقة على المعاملة #{transaction_id} بنجاح.')
+        else:
+            messages.warning(request, 'هذه المعاملة ليست معلقة.')
+    except Transaction.DoesNotExist:
+        messages.error(request, 'المعاملة غير موجودة.')
+    
+    return redirect('base:transactions')
+
+
+@login_required
+def reject_transaction(request, transaction_id):
+    """Reject a pending transaction (accountant only)."""
+    if request.user.user_type != 'accountant':
+        messages.error(request, 'غير مصرح لك بهذا الإجراء.')
+        return redirect('base:transactions')
+    
+    try:
+        transaction = Transaction.objects.get(pk=transaction_id)
+        if transaction.reject():
+            messages.success(request, f'تم رفض المعاملة #{transaction_id}.')
+        else:
+            messages.warning(request, 'هذه المعاملة ليست معلقة.')
+    except Transaction.DoesNotExist:
+        messages.error(request, 'المعاملة غير موجودة.')
     
     return redirect('base:transactions')
