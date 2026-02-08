@@ -183,9 +183,11 @@ inventory/
    ```bash
    cp .env.example .env
    # Edit .env with your configuration:
+   # - DEBUG=False (for production)
    # - SECRET_KEY=your-secret-key
-   # - DEBUG=True
+   # - ALLOWED_HOSTS=yourdomain.com
    # - GEMINI_API_KEY=your-gemini-api-key
+   # - DB_NAME=... (if using PostgreSQL)
    ```
 
 5. **Run database migrations**
