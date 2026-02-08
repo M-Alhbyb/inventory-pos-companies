@@ -1,0 +1,408 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}نقطة البيع (POS){% endblock %}
+
+{% block content %}
+<div class="flex h-[calc(100vh-6rem)] overflow-hidden gap-4">
+    <!-- Products Section -->
+    <div class="flex-1 flex flex-col bg-base-100 rounded-lg shadow-xl overflow-hidden">
+        <!-- Search Header -->
+        <div class="p-4 bg-base-200 flex gap-2">
+            <div class="form-control flex-1">
+                <div class="input-group">
+                    <input type="text" id="search-input" placeholder="بحث باسم المنتج أو الباركود..." class="input input-bordered w-full" autofocus />
+                    <button class="btn btn-square" onclick="searchProducts()">
+                        <i class="fa-solid fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <select id="category-filter" class="select select-bordered w-40" onchange="filterProducts()">
+                <option value="">كل الفئات</option>
+                {% for cat in categories %}
+                <option value="{{ cat.0 }}">{{ cat.1 }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- Products Grid -->
+        <div class="flex-1 overflow-y-auto p-4 bg-base-100" id="products-grid">
+            <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {% for product in products %}
+                <div class="card bg-base-100 shadow-md border hover:border-primary cursor-pointer product-card transition-all active:scale-95" 
+                     data-id="{{ product.id }}" 
+                     data-name="{{ product.name }}" 
+                     data-price="{{ product.price }}"
+                     data-stock="{{ product.stock }}"
+                     data-category="{{ product.category_id }}"
+                     data-barcode="{{ product.barcode }}"
+                     onclick="addToCart(this.dataset)">
+                    
+                    <figure class="px-4 pt-4 h-32">
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="rounded-xl object-contain h-full w-full" />
+                        {% else %}
+                            <div class="bg-base-200 rounded-xl h-full w-full flex items-center justify-center text-4xl text-base-content/20">
+                                <i class="fa-solid fa-box-open"></i>
+                            </div>
+                        {% endif %}
+                    </figure>
+                    <div class="card-body p-4 items-center text-center">
+                        <h3 class="font-bold text-sm line-clamp-2 h-10">{{ product.name }}</h3>
+                        <p class="text-xl font-bold text-primary">{{ product.price }}</p>
+                        <div class="badge badge-sm badge-ghost">{{ product.stock }} مخزون</div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-span-full text-center py-10 opacity-50">
+                    لا توجد منتجات
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cart Section -->
+    <div class="w-96 flex flex-col bg-base-100 rounded-lg shadow-xl h-full">
+        <!-- Cart Header -->
+        <div class="p-4 bg-primary text-primary-content flex justify-between items-center rounded-t-lg">
+            <h2 class="text-xl font-bold"><i class="fa-solid fa-cart-shopping"></i> السلة</h2>
+            <button class="btn btn-sm btn-circle btn-ghost text-white" onclick="clearCart()">
+                <i class="fa-solid fa-trash-can"></i>
+            </button>
+        </div>
+        
+        <!-- Cart Items -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-2 bg-base-100" id="cart-items">
+            <!-- Items added via JS -->
+            <div class="text-center py-10 opacity-50 empty-cart-msg">
+                السلة فارغة
+            </div>
+        </div>
+        
+        <!-- Totals & Checkout -->
+        <div class="p-4 bg-base-200 border-t border-base-300 space-y-3">
+            <div class="flex justify-between text-sm">
+                <span>المجموع الفرعي:</span>
+                <span id="subtotal">0.00</span>
+            </div>
+            
+            <div class="flex justify-between text-sm">
+                <span>الضريبة ({{ company.tax_rate }}%):</span>
+                <span id="tax">0.00</span>
+            </div>
+            
+            <div class="flex justify-between text-2xl font-bold text-primary border-t pt-2 border-base-300">
+                <span>الإجمالي:</span>
+                <span id="total">0.00</span>
+            </div>
+            
+            <button onclick="openCheckoutModal()" class="btn btn-primary btn-block btn-lg" id="checkout-btn" disabled>
+                دفع (F9) <i class="fa-solid fa-chevron-left mr-2"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Checkout Modal -->
+<input type="checkbox" id="checkout-modal" class="modal-toggle" />
+<div class="modal">
+    <div class="modal-box relative">
+        <label for="checkout-modal" class="btn btn-sm btn-circle absolute left-2 top-2">✕</label>
+        <h3 class="text-lg font-bold mb-4">إتمام الدفع</h3>
+        
+        <form id="checkout-form" onsubmit="processCheckout(event)">
+            {% csrf_token %}
+            <div class="form-control mb-4">
+                <label class="label"><span class="label-text">المبلغ النهائي</span></label>
+                <input type="text" id="final-total" class="input input-bordered text-2xl font-bold text-center" readonly />
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="form-control">
+                    <label class="label"><span class="label-text">المبلغ المدفوع</span></label>
+                    <input type="number" name="amount_paid" id="amount-paid" class="input input-bordered w-full input-lg" step="0.01" required oninput="calculateChange()" autofocus />
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">المتبقي</span></label>
+                    <input type="text" id="change-amount" class="input input-bordered w-full input-lg bg-base-200" readonly value="0.00" />
+                </div>
+            </div>
+            
+            <div class="form-control mb-4">
+                <label class="label"><span class="label-text">طريقة الدفع</span></label>
+                <div class="flex gap-4">
+                    <label class="label cursor-pointer gap-2 border p-2 rounded-lg flex-1">
+                        <input type="radio" name="payment_method" value="cash" class="radio radio-primary" checked />
+                        <span class="label-text"><i class="fa-solid fa-money-bill text-success"></i> كاش</span>
+                    </label>
+                    <label class="label cursor-pointer gap-2 border p-2 rounded-lg flex-1">
+                        <input type="radio" name="payment_method" value="card" class="radio radio-secondary" />
+                        <span class="label-text"><i class="fa-solid fa-credit-card text-info"></i> شبكة</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box mb-4">
+                <input type="checkbox" /> 
+                <div class="collapse-title text-sm font-medium">
+                   خيارات إضافية (خصم / عميل)
+                </div>
+                <div class="collapse-content space-y-3">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">نسبة الخصم (%)</span></label>
+                        <input type="number" name="discount_percentage" class="input input-bordered" min="0" max="100" value="0" />
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">اسم العميل</span></label>
+                        <input type="text" name="customer_name" class="input input-bordered" />
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg" id="confirm-payment-btn">
+                <span id="btn-text">تأكيد وطباعة</span>
+                <span id="btn-loader" class="loading loading-spinner hidden"></span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Receipt Modal (Hidden Iframe) -->
+<iframe id="receipt-frame" class="hidden"></iframe>
+
+<!-- Local Scripts -->
+<script>
+    const TAX_RATE = {{ company.tax_rate }};
+    const CSRF_TOKEN = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    let cart = [];
+    
+    // Initial Load
+    document.addEventListener('DOMContentLoaded', () => {
+        // Focus search on load
+        document.getElementById('search-input').focus();
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F9') {
+                e.preventDefault();
+                openCheckoutModal();
+            }
+        });
+    });
+
+    function addToCart(product) {
+        const existing = cart.find(item => item.id == product.id);
+        
+        if (existing) {
+            if (existing.quantity < product.stock) {
+                existing.quantity++;
+            } else {
+                alert('الكمية غير متوفرة بالمخزون');
+                return;
+            }
+        } else {
+            if (product.stock > 0) {
+                cart.push({
+                    id: product.id,
+                    name: product.name,
+                    price: parseFloat(product.price),
+                    quantity: 1,
+                    stock: parseInt(product.stock)
+                });
+            } else {
+                alert('المنتج غير متوفر');
+                return;
+            }
+        }
+        updateCartUI();
+    }
+
+    function updateCartUI() {
+        const container = document.getElementById('cart-items');
+        container.innerHTML = '';
+        
+        let subtotal = 0;
+        
+        if (cart.length === 0) {
+            container.innerHTML = '<div class="text-center py-10 opacity-50">السلة فارغة</div>';
+            document.getElementById('checkout-btn').disabled = true;
+        } else {
+            document.getElementById('checkout-btn').disabled = false;
+            
+            cart.forEach((item, index) => {
+                subtotal += item.price * item.quantity;
+                
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center bg-base-200 p-2 rounded-lg';
+                div.innerHTML = `
+                    <div class="flex-1">
+                        <div class="font-bold text-sm">${item.name}</div>
+                        <div class="text-xs text-opacity-70">${item.price} x ${item.quantity}</div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="font-bold">${(item.price * item.quantity).toFixed(2)}</div>
+                        <div class="join">
+                            <button class="btn btn-xs btn-square join-item" onclick="updateQty(${index}, -1)">-</button>
+                            <button class="btn btn-xs btn-square join-item" onclick="updateQty(${index}, 1)">+</button>
+                        </div>
+                        <button class="btn btn-xs btn-error btn-square" onclick="removeFromCart(${index})">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+        
+        const tax = subtotal * (TAX_RATE / 100);
+        const total = subtotal + tax;
+        
+        document.getElementById('subtotal').innerText = subtotal.toFixed(2);
+        document.getElementById('tax').innerText = tax.toFixed(2);
+        document.getElementById('total').innerText = total.toFixed(2);
+        document.getElementById('final-total').value = total.toFixed(2);
+    }
+    
+    function updateQty(index, change) {
+        const item = cart[index];
+        if (change === 1 && item.quantity >= item.stock) {
+            alert('وصلت للحد الأقصى للمخزون');
+            return;
+        }
+        
+        item.quantity += change;
+        if (item.quantity <= 0) {
+            cart.splice(index, 1);
+        }
+        updateCartUI();
+    }
+    
+    function removeFromCart(index) {
+        cart.splice(index, 1);
+        updateCartUI();
+    }
+    
+    function clearCart() {
+        if(confirm('تفريغ السلة؟')) {
+            cart = [];
+            updateCartUI();
+        }
+    }
+    
+    function filterProducts() {
+        const categoryId = document.getElementById('category-filter').value;
+        const cards = document.querySelectorAll('.product-card');
+        
+        cards.forEach(card => {
+            if (!categoryId || card.dataset.category === categoryId) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+    
+    function searchProducts() {
+        const query = document.getElementById('search-input').value.toLowerCase();
+        const cards = document.querySelectorAll('.product-card');
+        
+        cards.forEach(card => {
+            const name = card.dataset.name.toLowerCase();
+            const barcode = card.dataset.barcode.toLowerCase();
+            
+            if (name.includes(query) || barcode.includes(query)) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        
+        // Auto-add if exact barcode match
+        if (query) {
+           const exactMatch = Array.from(cards).find(c => c.dataset.barcode === query);
+           if (exactMatch) {
+               addToCart(exactMatch.dataset);
+               document.getElementById('search-input').value = '';
+               filterProducts(); // Reset view
+           }
+        }
+    }
+    
+    // Listen for enter in search
+    document.getElementById('search-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchProducts();
+    });
+    
+    function openCheckoutModal() {
+        if (cart.length === 0) return;
+        document.getElementById('checkout-modal').checked = true;
+        setTimeout(() => document.getElementById('amount-paid').focus(), 100);
+    }
+    
+    function calculateChange() {
+        const total = parseFloat(document.getElementById('final-total').value);
+        const paid = parseFloat(document.getElementById('amount-paid').value) || 0;
+        const change = paid - total;
+        document.getElementById('change-amount').value = change > 0 ? change.toFixed(2) : '0.00';
+    }
+    
+    function processCheckout(event) {
+        event.preventDefault();
+        
+        const form = document.getElementById('checkout-form');
+        const formData = new FormData(form);
+        formData.append('cart', JSON.stringify(cart));
+        
+        // UI Loading
+        const btn = document.getElementById('confirm-payment-btn');
+        const loader = document.getElementById('btn-loader');
+        const text = document.getElementById('btn-text');
+        
+        btn.disabled = true;
+        loader.classList.remove('hidden');
+        text.classList.add('hidden');
+        
+        fetch("{% url 'pos:checkout' %}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': CSRF_TOKEN
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Open receipt
+                printReceipt(data.sale_id);
+                // Clear cart and close modal
+                cart = [];
+                updateCartUI();
+                document.getElementById('checkout-modal').checked = false;
+                form.reset();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('حدث خطأ أثناء المعالجة');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            loader.classList.add('hidden');
+            text.classList.remove('hidden');
+        });
+    }
+    
+    function printReceipt(saleId) {
+        const url = `/pos/receipt/${saleId}/`;
+        const ifr = document.getElementById('receipt-frame');
+        ifr.src = url;
+        ifr.onload = () => {
+            ifr.contentWindow.print();
+        };
+    }
+</script>
+{% endblock %}

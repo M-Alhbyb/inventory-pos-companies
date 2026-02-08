@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}بيانات المنتج{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title text-2xl mb-6">
+                {% if form.instance.pk %}تعديل المنتج: {{ form.instance.name }}{% else %}منتج جديد{% endif %}
+            </h2>
+            
+            <form method="post" enctype="multipart/form-data" class="space-y-4">
+                {% csrf_token %}
+                
+                <div class="form-control">
+                    <label class="label"><span class="label-text">اسم المنتج</span></label>
+                    {{ form.name }}
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">الفئة</span></label>
+                        {{ form.category }}
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">صورة المنتج</span></label>
+                        <input type="file" name="image" class="file-input file-input-bordered w-full" />
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">سعر البيع</span></label>
+                        {{ form.price }}
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">سعر التكلفة</span></label>
+                        {{ form.cost }}
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">المخزون الحالي</span></label>
+                        {{ form.stock }}
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">حد الطلب (Low Stock)</span></label>
+                        {{ form.low_stock_threshold }}
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">SKU</span></label>
+                        {{ form.sku }}
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">الباركود</span></label>
+                        {{ form.barcode }}
+                    </div>
+                </div>
+                
+                <div class="form-control">
+                    <label class="label"><span class="label-text">الوصف</span></label>
+                    {{ form.description }}
+                </div>
+                
+                <div class="card-actions justify-end mt-6">
+                    <a href="{% url 'inventory:products' %}" class="btn btn-ghost">إلغاء</a>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

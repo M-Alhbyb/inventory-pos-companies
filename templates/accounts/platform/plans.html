@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}خطط الاشتراك{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-bold">خطط الاشتراك</h1>
+        <button class="btn btn-primary"><i class="fa-solid fa-plus"></i> خطة جديدة</button>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for plan in plans %}
+        <div class="card bg-base-100 shadow-xl border overflow-hidden">
+            <div class="card-body">
+                <div class="flex justify-between">
+                    <h2 class="card-title">{{ plan.name }}</h2>
+                    <div class="badge badge-lg">{{ plan.price_monthly }} ر.س</div>
+                </div>
+                
+                <ul class="space-y-2 my-4">
+                    <li class="flex items-center gap-2">
+                        <i class="fa-solid fa-users text-primary"></i> 
+                        <span>{{ plan.max_users }} مستخدمين</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <i class="fa-solid fa-box text-primary"></i> 
+                        <span>{{ plan.max_products }} منتج</span>
+                    </li>
+                    {% if plan.has_inventory %}
+                    <li class="flex items-center gap-2 text-success">
+                        <i class="fa-solid fa-check"></i> إدارة المخزون
+                    </li>
+                    {% else %}
+                    <li class="flex items-center gap-2 text-base-content/30">
+                        <i class="fa-solid fa-xmark"></i> إدارة المخزون
+                    </li>
+                    {% endif %}
+                    {% if plan.has_pos %}
+                    <li class="flex items-center gap-2 text-success">
+                        <i class="fa-solid fa-check"></i> نقاط البيع
+                    </li>
+                    {% else %}
+                    <li class="flex items-center gap-2 text-base-content/30">
+                        <i class="fa-solid fa-xmark"></i> نقاط البيع
+                    </li>
+                    {% endif %}
+                </ul>
+                
+                <div class="card-actions justify-end">
+                    <button class="btn btn-sm btn-ghost"><i class="fa-solid fa-pen"></i> وتعديل</button>
+                </div>
+            </div>
+            <div class="bg-base-200 p-2 text-center text-xs opacity-60">
+                {{ plan.subscriptions.count }} شركة مشتركة
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center py-10 opacity-50">لا توجد خطط</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

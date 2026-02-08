@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}المندوبين{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-bold">المندوبين</h1>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for rep in representatives %}
+        <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all">
+            <div class="card-body items-center text-center">
+                <div class="avatar placeholder mb-2">
+                    <div class="bg-neutral text-neutral-content rounded-full w-20">
+                        <span class="text-3xl">{{ rep.username|make_list|first|upper }}</span>
+                    </div>
+                </div>
+                
+                <h2 class="card-title">{{ rep.get_full_name|default:rep.username }}</h2>
+                <div class="text-sm opacity-70 mb-4">{{ rep.phone|default:"-" }}</div>
+                
+                <div class="stats stats-vertical lg:stats-horizontal shadow w-full text-xs">
+                    <div class="stat p-2">
+                        <div class="stat-title">في العهدة</div>
+                        <div class="stat-value text-primary text-lg">{{ rep.products_count }}</div>
+                    </div>
+                    
+                    <div class="stat p-2">
+                        <div class="stat-title">المعاملات</div>
+                        <div class="stat-value text-secondary text-lg">{{ rep.transactions.count }}</div>
+                    </div>
+                </div>
+                
+                <div class="card-actions mt-4 w-full">
+                    <a href="{% url 'inventory:representative_detail' rep.id %}" class="btn btn-primary btn-block">عرض التفاصيل</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center py-10 opacity-50">
+            <i class="fa-solid fa-users-slash text-6xl mb-4"></i>
+            <p class="text-xl">لا يوجد مندوبين مسجلين</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

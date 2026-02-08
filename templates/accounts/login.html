@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}تسجيل الدخول - Inventory Pro{% endblock %}
+
+{% block auth_content %}
+<div class="card w-96 bg-base-100 shadow-xl">
+    <div class="card-body">
+        <h2 class="card-title justify-center text-2xl font-bold text-primary mb-4">Inventory Pro</h2>
+        
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            
+            {% for field in form %}
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">{{ field.label }}</span>
+                    </label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <div class="text-error text-sm mt-1">
+                            {{ field.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            
+            {% if form.non_field_errors %}
+                <div class="alert alert-error text-sm">
+                    {{ form.non_field_errors.0 }}
+                </div>
+            {% endif %}
+            
+            <div class="card-actions justify-end mt-4">
+                <button type="submit" class="btn btn-primary w-full">دخول</button>
+            </div>
+        </form>
+        
+        <div class="divider">أو</div>
+        
+        <div class="text-center">
+            <a href="{% url 'accounts:register' %}" class="link link-primary">تسجيل شركة جديدة</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

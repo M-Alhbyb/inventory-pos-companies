@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}الملخص اليومي{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <h1 class="text-3xl font-bold">الملخص اليومي</h1>
+    
+    <div class="alert alert-info shadow-lg">
+        <i class="fa-solid fa-calendar-day"></i>
+        <span>التاريخ: {{ date|date:"l, Y-m-d" }}</span>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="stat bg-base-100 shadow-md rounded-box">
+            <div class="stat-title">إجمالي المبيعات</div>
+            <div class="stat-value text-primary">{{ total_amount }}</div>
+            <div class="stat-desc">{{ total_sales }} عملية بيع</div>
+        </div>
+        
+        <div class="stat bg-base-100 shadow-md rounded-box">
+            <div class="stat-title">الكاش (نقد)</div>
+            <div class="stat-value text-success">{{ cash_amount }}</div>
+        </div>
+        
+        <div class="stat bg-base-100 shadow-md rounded-box">
+            <div class="stat-title">الشبكة (بطاقة)</div>
+            <div class="stat-value text-secondary">{{ card_amount }}</div>
+        </div>
+        
+        <div class="stat bg-base-100 shadow-md rounded-box">
+            <div class="stat-title">تحويل بنكي</div>
+            <div class="stat-value text-info">{{ transfer_amount }}</div>
+        </div>
+    </div>
+    
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title mb-4">تفاصيل المبيعات اليوم</h2>
+            
+            <div class="overflow-x-auto">
+                <table class="table table-compact w-full">
+                    <thead>
+                        <tr>
+                            <th>رقم الفاتورة</th>
+                            <th>الوقت</th>
+                            <th>طريقة الدفع</th>
+                            <th>المبلغ</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sale in sales %}
+                        <tr>
+                            <td class="font-mono">{{ sale.receipt_number }}</td>
+                            <td>{{ sale.created_at|date:"H:i" }}</td>
+                            <td>{{ sale.get_payment_method_display }}</td>
+                            <td class="font-bold">{{ sale.total }}</td>
+                            <td>
+                                <button onclick="printReceipt({{ sale.id }})" class="btn btn-ghost btn-xs">
+                                    <i class="fa-solid fa-print"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">لا توجد مبيعات اليوم</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Receipt Printing Iframe -->
+<iframe id="receipt-frame" class="hidden"></iframe>
+
+<script>
+    function printReceipt(saleId) {
+        const url = `/pos/receipt/${saleId}/`;
+        const ifr = document.getElementById('receipt-frame');
+        ifr.src = url;
+        ifr.onload = () => {
+            ifr.contentWindow.print();
+        };
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}المعاملات{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <h1 class="text-3xl font-bold">المعاملات</h1>
+    
+    <!-- Filters -->
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body p-4">
+            <form method="get" class="flex flex-wrap gap-4">
+                <div class="form-control">
+                    <label class="label"><span class="label-text">الحالة</span></label>
+                    <select name="status" class="select select-bordered" onchange="this.form.submit()">
+                        <option value="">الكل</option>
+                        <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>معلق</option>
+                        <option value="approved" {% if current_status == 'approved' %}selected{% endif %}>موافق عليه</option>
+                        <option value="rejected" {% if current_status == 'rejected' %}selected{% endif %}>مرفوض</option>
+                    </select>
+                </div>
+                
+                <div class="form-control">
+                    <label class="label"><span class="label-text">النوع</span></label>
+                    <select name="type" class="select select-bordered" onchange="this.form.submit()">
+                        <option value="">الكل</option>
+                        <option value="take" {% if current_type == 'take' %}selected{% endif %}>أخذ بضاعة</option>
+                        <option value="restore" {% if current_type == 'restore' %}selected{% endif %}>إرجاع</option>
+                        <option value="payment" {% if current_type == 'payment' %}selected{% endif %}>دفع</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Transactions Table -->
+    {% for transaction in transactions %}
+    <div class="card bg-base-100 shadow-xl mb-4 border-l-4 {% if transaction.status == 'approved' %}border-success{% elif transaction.status == 'rejected' %}border-error{% else %}border-warning{% endif %}">
+        <div class="card-body">
+            <div class="flex flex-wrap justify-between items-start gap-4">
+                <div>
+                    <div class="flex items-center gap-2 mb-2">
+                        {% if transaction.type == 'take' %}
+                            <span class="badge badge-error">أخذ بضاعة</span>
+                        {% elif transaction.type == 'restore' %}
+                            <span class="badge badge-info">إرجاع</span>
+                        {% else %}
+                            <span class="badge badge-success">دفع</span>
+                        {% endif %}
+                        <span class="text-sm opacity-50">{{ transaction.date|date:"Y-m-d H:i" }}</span>
+                    </div>
+                    <h3 class="font-bold text-lg">{{ transaction.user.get_full_name|default:transaction.user.username }}</h3>
+                    {% if transaction.notes %}
+                        <p class="text-sm opacity-70 mt-1">{{ transaction.notes }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="text-end">
+                    {% if transaction.type == 'payment' %}
+                        <div class="text-2xl font-bold">{{ transaction.amount }} ر.س</div>
+                    {% else %}
+                        <div class="text-2xl font-bold">{{ transaction.items.count }} <span class="text-sm font-normal">عنصر</span></div>
+                    {% endif %}
+                    
+                    <div class="mt-2">
+                        {% if transaction.status == 'pending' %}
+                            <div class="join">
+                                <form action="{% url 'inventory:approve_transaction' transaction.id %}" method="post">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-success join-item">موافقة</button>
+                                </form>
+                                <form action="{% url 'inventory:reject_transaction' transaction.id %}" method="post">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-error join-item">رفض</button>
+                                </form>
+                            </div>
+                        {% else %}
+                            <div class="badge badge-outline">
+                                {{ transaction.get_status_display }} 
+                                {% if transaction.approved_by %}
+                                    بواسطة {{ transaction.approved_by.username }}
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            {% if transaction.type != 'payment' and transaction.items.exists %}
+            <div class="divider my-2"></div>
+            <div class="overflow-x-auto">
+                <table class="table table-xs w-full">
+                    <thead>
+                        <tr>
+                            <th>المنتج</th>
+                            <th>الكمية</th>
+                            <th>السعر</th>
+                            <th>الإجمالي</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in transaction.items.all %}
+                        <tr>
+                            <td>{{ item.product.name }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.price }}</td>
+                            <td>{{ item.quantity|multiply:item.price }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="text-center py-8 opacity-50">
+        <i class="fa-solid fa-file-invoice text-4xl mb-2"></i>
+        <p>لا توجد معاملات</p>
+    </div>
+    {% endfor %}
+    
+    <!-- Pagination -->
+    {% if transactions.has_other_pages %}
+    <div class="flex justify-center">
+        <div class="join">
+            {% if transactions.has_previous %}
+                <a href="?page={{ transactions.previous_page_number }}" class="join-item btn">«</a>
+            {% endif %}
+            <button class="join-item btn">صفحة {{ transactions.number }}</button>
+            {% if transactions.has_next %}
+                <a href="?page={{ transactions.next_page_number }}" class="join-item btn">»</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

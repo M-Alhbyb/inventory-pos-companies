@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}حالة الاشتراك{% endblock %}
+
+{% block content %}
+<div class="hero bg-base-100 rounded-xl shadow-xl py-10">
+    <div class="hero-content text-center">
+        <div class="max-w-md">
+            {% if subscription %}
+                <h1 class="text-3xl font-bold mb-6">حالة اشتراك الشركة</h1>
+                
+                <div class="stats shadow w-full mb-8 bg-base-200">
+                    <div class="stat">
+                        <div class="stat-title">الخطة الحالية</div>
+                        <div class="stat-value text-primary">{{ subscription.plan.name }}</div>
+                        <div class="stat-desc text-success uppercase">{{ subscription.get_status_display }}</div>
+                    </div>
+                </div>
+                
+                <div class="text-start space-y-4 mb-8 border p-6 rounded-lg">
+                    <div class="flex justify-between">
+                        <span class="font-bold">تاريخ البدء:</span>
+                        <span>{{ subscription.start_date|default:"-" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="font-bold">تاريخ الانتهاء:</span>
+                        <span>{{ subscription.end_date|default:"-" }}</span>
+                    </div>
+                    {% if subscription.status == 'trial' %}
+                    <div class="alert alert-info py-2 text-sm">
+                        <i class="fa-solid fa-clock"></i>
+                        فترة تجريبية تنتهي في {{ subscription.trial_end_date }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if subscription.status == 'expired' or subscription.status == 'cancelled' %}
+                    <button class="btn btn-primary btn-wide">تجديد الاشتراك</button>
+                {% else %}
+                    <a href="{% url 'home' %}" class="btn btn-outline">العودة للرئيسية</a>
+                {% endif %}
+                
+            {% else %}
+                <h1 class="text-3xl font-bold text-error mb-4">لا يوجد اشتراك!</h1>
+                <p class="mb-6">يرجى التواصل مع إدارة المنصة لتفعيل اشتراكك.</p>
+                <a href="{% url 'accounts:login' %}" class="btn btn-primary">تسجيل الدخول</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

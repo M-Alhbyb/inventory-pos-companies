@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}سجل المبيعات{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-bold">سجل المبيعات</h1>
+        <div class="stats shadow bg-base-100">
+            <div class="stat p-2 px-4">
+                <div class="stat-title text-xs">مبيعات اليوم</div>
+                <div class="stat-value text-lg text-primary">{{ today_total }}</div>
+            </div>
+            <div class="stat p-2 px-4">
+                <div class="stat-title text-xs">عدد الفواتير</div>
+                <div class="stat-value text-lg">{{ today_count }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body p-0">
+            <!-- Date Filter -->
+            <div class="p-4 border-b">
+                <form method="get" class="flex items-end gap-4">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">تاريخ</span></label>
+                        <input type="date" name="date" class="input input-bordered" value="{{ request.GET.date }}">
+                    </div>
+                    <button type="submit" class="btn btn-primary">عرض</button>
+                    {% if request.GET.date %}
+                        <a href="{% url 'pos:history' %}" class="btn btn-ghost">إلغاء الفلتر</a>
+                    {% endif %}
+                </form>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="table table-zebra w-full">
+                    <thead>
+                        <tr>
+                            <th>رقم الفاتورة</th>
+                            <th>التاريخ والوقت</th>
+                            <th>العميل</th>
+                            <th>المبلغ</th>
+                            <th>الدفع</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sale in sales %}
+                        <tr>
+                            <td class="font-mono font-bold">{{ sale.receipt_number }}</td>
+                            <td>
+                                <div>{{ sale.created_at|date:"Y-m-d" }}</div>
+                                <div class="text-xs opacity-50">{{ sale.created_at|date:"H:i" }}</div>
+                            </td>
+                            <td>
+                                {% if sale.customer_name %}
+                                    {{ sale.customer_name }}
+                                {% else %}
+                                    <span class="opacity-50">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="font-bold">{{ sale.total }}</td>
+                            <td>
+                                {% if sale.payment_method == 'cash' %}
+                                    <div class="badge badge-success badge-outline">كاش</div>
+                                {% elif sale.payment_method == 'card' %}
+                                    <div class="badge badge-info badge-outline">شبكة</div>
+                                {% else %}
+                                    <div class="badge badge-warning badge-outline">تحويل</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button onclick="printReceipt({{ sale.id }})" class="btn btn-sm btn-ghost" title="طباعة">
+                                    <i class="fa-solid fa-print"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-8 opacity-50">لا توجد مبيعات</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden Iframe for Printing -->
+<iframe id="receipt-frame" class="hidden"></iframe>
+
+<script>
+    function printReceipt(saleId) {
+        const url = `/pos/receipt/${saleId}/`;
+        const ifr = document.getElementById('receipt-frame');
+        ifr.src = url;
+        ifr.onload = () => {
+            ifr.contentWindow.print();
+        };
+    }
+</script>
+{% endblock %}

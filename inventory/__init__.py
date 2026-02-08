@@ -1,2 +1,2 @@
-# This will make sure the app is always imported when
-# Django starts so that shared_task will use this app.
+# Inventory App - Products, Categories, and Transactions
+default_app_config = 'inventory.apps.InventoryConfig'

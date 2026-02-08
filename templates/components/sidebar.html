@@ -1,0 +1,58 @@
+<ul class="menu p-4 w-80 min-h-full bg-base-100 text-base-content border-l border-base-200">
+    <!-- Platform Manager Sidebar -->
+    {% if user.is_platform_manager %}
+        <li class="menu-title">الإدارة</li>
+        <li><a href="{% url 'accounts:platform_dashboard' %}" class="{% if request.resolver_match.url_name == 'platform_dashboard' %}active{% endif %}"><i class="fa-solid fa-gauge"></i> لوحة التحكم</a></li>
+        <li><a href="{% url 'accounts:platform_companies' %}" class="{% if request.resolver_match.url_name == 'platform_companies' %}active{% endif %}"><i class="fa-solid fa-building"></i> الشركات</a></li>
+        <li><a href="{% url 'accounts:platform_plans' %}" class="{% if request.resolver_match.url_name == 'platform_plans' %}active{% endif %}"><i class="fa-solid fa-tags"></i> الاشتراكات</a></li>
+    {% endif %}
+
+    <!-- Company Manager Sidebar -->
+    {% if user.is_company_manager %}
+        <li class="menu-title">إدارة الشركة</li>
+        <li><a href="{% url 'accounts:company_dashboard' %}" class="{% if request.resolver_match.url_name == 'company_dashboard' %}active{% endif %}"><i class="fa-solid fa-chart-pie"></i> لوحة المعلومات</a></li>
+        <li><a href="{% url 'accounts:company_users' %}" class="{% if 'users' in request.path %}active{% endif %}"><i class="fa-solid fa-users"></i> المستخدمين</a></li>
+        <li><a href="{% url 'accounts:company_settings' %}" class="{% if request.resolver_match.url_name == 'company_settings' %}active{% endif %}"><i class="fa-solid fa-sliders"></i> الإعدادات</a></li>
+        <li><a href="{% url 'accounts:subscription_status' %}"><i class="fa-solid fa-file-invoice"></i> حالة الاشتراك</a></li>
+    {% endif %}
+
+    <!-- Accountant Sidebar (Inventory) -->
+    {% if user.is_accountant %}
+        <li class="menu-title">المخزون</li>
+        <li><a href="{% url 'inventory:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.app_name == 'inventory' %}active{% endif %}"><i class="fa-solid fa-boxes-stacked"></i> لوحة المخزون</a></li>
+        <li><a href="{% url 'inventory:categories' %}" class="{% if 'categories' in request.path %}active{% endif %}"><i class="fa-solid fa-layer-group"></i> الفئات</a></li>
+        <li><a href="{% url 'inventory:products' %}" class="{% if 'products' in request.path %}active{% endif %}"><i class="fa-solid fa-box-open"></i> المنتجات</a></li>
+        <li><a href="{% url 'inventory:transactions' %}" class="{% if 'transactions' in request.path %}active{% endif %}"><i class="fa-solid fa-arrow-right-arrow-left"></i> المعاملات</a></li>
+        
+        <li class="menu-title">المندوبين</li>
+        <li><a href="{% url 'inventory:representatives' %}" class="{% if 'representatives' in request.path %}active{% endif %}"><i class="fa-solid fa-user-tie"></i> قائمة المندوبين</a></li>
+    {% endif %}
+
+    <!-- Representative Sidebar -->
+    {% if user.is_representative %}
+        <li class="menu-title">بوابة المندوب</li>
+        <li><a href="{% url 'inventory:rep_dashboard' %}" class="{% if request.resolver_match.url_name == 'rep_dashboard' %}active{% endif %}"><i class="fa-solid fa-clipboard-list"></i> لوحة المعلومات</a></li>
+        <li><a href="{% url 'inventory:rep_request' %}" class="{% if request.resolver_match.url_name == 'rep_request' %}active{% endif %}"><i class="fa-solid fa-paper-plane"></i> طلب معاملة</a></li>
+        <li><a href="{% url 'inventory:rep_transactions' %}" class="{% if request.resolver_match.url_name == 'rep_transactions' %}active{% endif %}"><i class="fa-solid fa-history"></i> سجلي</a></li>
+    {% endif %}
+
+    <!-- Cashier Sidebar -->
+    {% if user.is_cashier %}
+        <li class="menu-title">نقطة البيع</li>
+        <li><a href="{% url 'pos:interface' %}" class="{% if request.resolver_match.url_name == 'interface' %}active{% endif %}"><i class="fa-solid fa-cash-register"></i> الكاشير</a></li>
+        <li><a href="{% url 'pos:history' %}" class="{% if request.resolver_match.url_name == 'history' %}active{% endif %}"><i class="fa-solid fa-receipt"></i> المبيعات</a></li>
+        <li><a href="{% url 'pos:daily_summary' %}" class="{% if request.resolver_match.url_name == 'daily_summary' %}active{% endif %}"><i class="fa-solid fa-calendar-day"></i> الملخص اليومي</a></li>
+    {% endif %}
+
+    {% if not user.is_superuser %}
+        <div class="divider"></div>
+        <li>
+            <div class="stats bg-base-200 shadow stats-vertical lg:stats-horizontal p-0">
+                <div class="stat p-2 place-items-center">
+                   <div class="stat-title text-xs">الوقت</div>
+                   <div class="stat-value text-lg" id="clock">00:00</div>
+                </div>
+            </div>
+        </li>
+    {% endif %}
+</ul>

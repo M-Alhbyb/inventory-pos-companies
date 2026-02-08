@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}لوحة تحكم الشركة{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-bold">مرحباً، {{ user.first_name|default:user.username }}</h1>
+        <div class="badge badge-primary badge-lg">{{ subscription.plan.name }}</div>
+    </div>
+    
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Users Usage -->
+        <div class="stats bg-base-100 shadow border-l-4 border-primary">
+            <div class="stat">
+                <div class="stat-figure text-primary">
+                    <i class="fa-solid fa-users text-3xl"></i>
+                </div>
+                <div class="stat-title">المستخدمين</div>
+                <div class="stat-value text-primary">{{ user_count }} / {{ user_limit }}</div>
+                <div class="stat-desc">المستخدمة من الخطة</div>
+                <progress class="progress progress-primary w-full mt-2" value="{{ user_count }}" max="{{ user_limit }}"></progress>
+            </div>
+        </div>
+        
+        <!-- Products Usage -->
+        <div class="stats bg-base-100 shadow border-l-4 border-secondary">
+            <div class="stat">
+                <div class="stat-figure text-secondary">
+                    <i class="fa-solid fa-box text-3xl"></i>
+                </div>
+                <div class="stat-title">المنتجات</div>
+                <div class="stat-value text-secondary">{{ product_count }} / {{ product_limit }}</div>
+                <div class="stat-desc">المخزون الحالي</div>
+                <progress class="progress progress-secondary w-full mt-2" value="{{ product_count }}" max="{{ product_limit }}"></progress>
+            </div>
+        </div>
+        
+        <!-- Tax Setting -->
+        <div class="stats bg-base-100 shadow border-l-4 border-accent">
+            <div class="stat">
+                <div class="stat-figure text-accent">
+                    <i class="fa-solid fa-percent text-3xl"></i>
+                </div>
+                <div class="stat-title">الضريبة</div>
+                <div class="stat-value text-accent">{{ company.tax_rate }}%</div>
+                <div class="stat-desc text-xs">{{ company.tax_name|default:'VAT' }}</div>
+            </div>
+        </div>
+        
+        <!-- Subscription Status -->
+        <div class="stats bg-base-100 shadow border-l-4 border-neutral">
+            <div class="stat">
+                <div class="stat-figure text-neutral">
+                    <i class="fa-solid fa-calendar-check text-3xl"></i>
+                </div>
+                <div class="stat-title">حالة الاشتراك</div>
+                <div class="stat-value text-lg">
+                    {% if subscription.status == 'active' %}نشط{% else %}{{ subscription.status }}{% endif %}
+                </div>
+                <div class="stat-desc">ينتهي في: {{ subscription.end_date|default:'-' }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="card bg-base-100 shadow-xl image-full">
+            <figure><img src="https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?auto=format&fit=crop&w=800&q=80" alt="Users" /></figure>
+            <div class="card-body">
+                <h2 class="card-title">إدارة المستخدمين</h2>
+                <p>إضافة وتعديل صلاحيات الموظفين، المحاسبين، والمندوبين.</p>
+                <div class="card-actions justify-end">
+                    <a href="{% url 'accounts:company_users' %}" class="btn btn-primary">إدارة</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card bg-base-100 shadow-xl image-full">
+            <figure><img src="https://images.unsplash.com/photo-1580519542036-c47de6196ba5?auto=format&fit=crop&w=800&q=80" alt="Settings" /></figure>
+            <div class="card-body">
+                <h2 class="card-title">إعدادات الشركة</h2>
+                <p>تخصيص معلومات الشركة، الضرائب، والشعار.</p>
+                <div class="card-actions justify-end">
+                    <a href="{% url 'accounts:company_settings' %}" class="btn btn-secondary">تعديل</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card bg-base-100 shadow-xl image-full">
+            <figure><img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80" alt="Reports" /></figure>
+            <div class="card-body">
+                <h2 class="card-title">التقارير</h2>
+                <p>متابعة المبيعات والمخزون وأداء الموظفين.</p>
+                <div class="card-actions justify-end">
+                    <button class="btn btn-accent">عرض (قريباً)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- User List Preview -->
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="card-title">طاقم العمل</h2>
+                <a href="{% url 'accounts:company_users' %}" class="btn btn-sm btn-ghost">عرض الكل</a>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for user in users|slice:":3" %}
+                <div class="flex items-center gap-4 p-4 border rounded-lg">
+                    <div class="avatar placeholder">
+                        <div class="bg-neutral text-neutral-content rounded-full w-12">
+                            <span class="text-xl">{{ user.username|make_list|first|upper }}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="font-bold">{{ user.get_full_name|default:user.username }}</div>
+                        <div class="text-sm opacity-50 badge badge-outline">{{ user.get_role_display }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

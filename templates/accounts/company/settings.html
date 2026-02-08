@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}إعدادات الشركة{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title text-2xl mb-6">إعدادات الشركة</h2>
+            
+            <form method="post" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Company Info -->
+                <div class="collapse collapse-open border border-base-300 bg-base-100 rounded-box">
+                    <div class="collapse-title text-xl font-medium bg-base-200">
+                        معلومات الشركة
+                    </div>
+                    <div class="collapse-content pt-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-control">
+                                <label class="label"><span class="label-text">اسم الشركة</span></label>
+                                {{ form.name }}
+                            </div>
+                            
+                            <div class="form-control">
+                                <label class="label"><span class="label-text">البريد الإلكتروني</span></label>
+                                {{ form.email }}
+                            </div>
+                            
+                            <div class="form-control">
+                                <label class="label"><span class="label-text">رقم الهاتف</span></label>
+                                {{ form.phone }}
+                            </div>
+                            
+                            <div class="form-control">
+                                <label class="label"><span class="label-text">العنوان</span></label>
+                                {{ form.address }}
+                            </div>
+                            
+                            <div class="form-control col-span-2">
+                                <label class="label"><span class="label-text">الشعار</span></label>
+                                <input type="file" name="logo" class="file-input file-input-bordered w-full" />
+                                {% if company.logo %}
+                                    <div class="mt-2 text-sm opacity-70">الشعار الحالي: {{ company.logo.name }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tax Settings -->
+                <div class="collapse collapse-open border border-base-300 bg-base-100 rounded-box">
+                    <div class="collapse-title text-xl font-medium bg-base-200">
+                        إعدادات الضريبة
+                    </div>
+                    <div class="collapse-content pt-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-control">
+                                <label class="label"><span class="label-text">الرقم الضريبي</span></label>
+                                {{ form.tax_number }}
+                            </div>
+                            
+                            <div class="form-control">
+                                <label class="label"><span class="label-text">اسم الضريبة (مثلاً: ضريبة القيمة المضافة)</span></label>
+                                {{ form.tax_name }}
+                            </div>
+                            
+                            <div class="form-control">
+                                <label class="label"><span class="label-text">نسبة الضريبة (%)</span></label>
+                                {{ form.tax_rate }}
+                            </div>
+                            
+                            <div class="form-control">
+                                <label class="label cursor-pointer justify-start gap-4">
+                                    <span class="label-text">تفعيل الضريبة</span> 
+                                    {{ form.tax_enabled }} 
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-actions justify-end mt-6">
+                    <button type="submit" class="btn btn-primary btn-lg">حفظ التغييرات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

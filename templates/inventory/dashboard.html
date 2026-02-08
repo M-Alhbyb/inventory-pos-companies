@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}لوحة المخزون{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <h1 class="text-3xl font-bold">لوحة إدارة المخزون</h1>
+    
+    <!-- Stats Cards -->
+    <div class="stats shadow w-full">
+        <div class="stat">
+            <div class="stat-figure text-primary">
+                <i class="fa-solid fa-box-open text-3xl"></i>
+            </div>
+            <div class="stat-title">المنتجات</div>
+            <div class="stat-value text-primary">{{ total_products }}</div>
+            <div class="stat-desc">منتج مسجل</div>
+        </div>
+        
+        <div class="stat">
+            <div class="stat-figure text-secondary">
+                <i class="fa-solid fa-layer-group text-3xl"></i>
+            </div>
+            <div class="stat-title">الفئات</div>
+            <div class="stat-value text-secondary">{{ total_categories }}</div>
+            <div class="stat-desc">فئة متاحة</div>
+        </div>
+        
+        <div class="stat">
+            <div class="stat-figure text-accent">
+                <i class="fa-solid fa-user-tie text-3xl"></i>
+            </div>
+            <div class="stat-title">المندوبين</div>
+            <div class="stat-value text-accent">{{ total_representatives }}</div>
+            <div class="stat-desc">مندوب نشط</div>
+        </div>
+        
+        <div class="stat">
+            <div class="stat-figure text-warning">
+                <i class="fa-solid fa-triangle-exclamation text-3xl"></i>
+            </div>
+            <div class="stat-title">تنبيهات المخزون</div>
+            <div class="stat-value text-warning">{{ low_stock_products }}</div>
+            <div class="stat-desc">منخفضة المخزون</div>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Recent Transactions -->
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body p-0">
+                <div class="flex justify-between items-center p-6 pb-2">
+                    <h2 class="card-title">آخر المعاملات</h2>
+                    <a href="{% url 'inventory:transactions' %}" class="btn btn-sm btn-ghost">عرض الكل</a>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra w-full">
+                        <thead>
+                            <tr>
+                                <th>نوع المعاملة</th>
+                                <th>المندوب</th>
+                                <th>الحالة</th>
+                                <th>التاريخ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trans in recent_transactions %}
+                            <tr>
+                                <td>
+                                    {% if trans.type == 'take' %}
+                                        <div class="badge badge-error gap-2"><i class="fa-solid fa-minus"></i> أخذ بضاعة</div>
+                                    {% elif trans.type == 'restore' %}
+                                        <div class="badge badge-info gap-2"><i class="fa-solid fa-rotate-left"></i> إرجاع</div>
+                                    {% else %}
+                                        <div class="badge badge-success gap-2"><i class="fa-solid fa-money-bill"></i> دفع</div>
+                                    {% endif %}
+                                </td>
+                                <td>{{ trans.user.get_full_name|default:trans.user.username }}</td>
+                                <td>
+                                    {% if trans.status == 'approved' %}
+                                        <span class="text-success"><i class="fa-solid fa-check-circle"></i></span>
+                                    {% elif trans.status == 'rejected' %}
+                                        <span class="text-error"><i class="fa-solid fa-times-circle"></i></span>
+                                    {% else %}
+                                        <span class="text-warning"><i class="fa-solid fa-clock"></i></span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-xs">{{ trans.date|date:"d/m H:i" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4">لا توجد معاملات حديثة</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions & Pending -->
+        <div class="space-y-6">
+            {% if pending_count > 0 %}
+            <div class="alert alert-warning shadow-lg">
+                <i class="fa-solid fa-bell fa-beat"></i>
+                <div class="flex-1">
+                    <h3 class="font-bold">طلبات معلقة!</h3>
+                    <div class="text-xs">يوجد {{ pending_count }} معاملة بانتظار الموافقة.</div>
+                </div>
+                <a href="{% url 'inventory:transactions' %}?status=pending" class="btn btn-sm">مراجعة</a>
+            </div>
+            {% endif %}
+            
+            <div class="grid grid-cols-2 gap-4">
+                <a href="{% url 'inventory:add_product' %}" class="btn btn-outline h-32 flex-col gap-2">
+                    <i class="fa-solid fa-plus-circle text-3xl"></i>
+                    منتج جديد
+                </a>
+                
+                <a href="{% url 'inventory:add_category' %}" class="btn btn-outline h-32 flex-col gap-2">
+                    <i class="fa-solid fa-folder-plus text-3xl"></i>
+                    فئة جديدة
+                </a>
+                
+                <a href="{% url 'inventory:transactions' %}" class="btn btn-outline h-32 flex-col gap-2">
+                    <i class="fa-solid fa-file-invoice text-3xl"></i>
+                    تقرير المعاملات
+                </a>
+                
+                <a href="{% url 'inventory:representatives' %}" class="btn btn-outline h-32 flex-col gap-2">
+                    <i class="fa-solid fa-users-viewfinder text-3xl"></i>
+                    حسابات المندوبين
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}بوابة المندوب{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-bold">لوحة المندوب</h1>
+        <a href="{% url 'inventory:rep_request' %}" class="btn btn-primary">
+            <i class="fa-solid fa-paper-plane ml-2"></i> طلب جديد
+        </a>
+    </div>
+    
+    <!-- Stats -->
+    <div class="stats shadow w-full">
+        <div class="stat">
+            <div class="stat-figure text-primary">
+                <i class="fa-solid fa-box text-3xl"></i>
+            </div>
+            <div class="stat-title">عهدتي</div>
+            <div class="stat-value text-primary">{{ products_count }}</div>
+            <div class="stat-desc">منتج بحوزتي</div>
+        </div>
+        
+        <div class="stat">
+            <div class="stat-figure text-error">
+                <i class="fa-solid fa-minus-circle text-3xl"></i>
+            </div>
+            <div class="stat-title">إجمالي المسحوبات</div>
+            <div class="stat-value text-error">{{ take_total }}</div>
+            <div class="stat-desc">ر.س (تمت الموافقة)</div>
+        </div>
+        
+        <div class="stat">
+            <div class="stat-figure text-success">
+                <i class="fa-solid fa-money-bill-wave text-3xl"></i>
+            </div>
+            <div class="stat-title">إجمالي المدفوعات</div>
+            <div class="stat-value text-success">{{ payment_total }}</div>
+            <div class="stat-desc">ر.س (تمت الموافقة)</div>
+        </div>
+    </div>
+    
+    <!-- Pending Requests Alert -->
+    {% if pending_count > 0 %}
+    <div class="alert alert-info shadow-lg">
+        <i class="fa-solid fa-clock"></i>
+        <span>لديك {{ pending_count }} طلبات قيد المراجعة حالياً.</span>
+        <a href="{% url 'inventory:rep_transactions' %}?status=pending" class="btn btn-sm btn-ghost">عرض</a>
+    </div>
+    {% endif %}
+    
+    <!-- Recent Activity -->
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title mb-4">نشاطي الأخير</h2>
+            
+            <ul class="steps steps-vertical w-full">
+                {% for trans in recent_transactions %}
+                <li class="steps-step {% if trans.status == 'approved' %}step-primary{% elif trans.status == 'rejected' %}step-error{% endif %}">
+                    <div class="flex justify-between w-full text-start px-4">
+                        <div>
+                            <span class="font-bold">
+                                {% if trans.type == 'take' %}أخذ بضاعة{% elif trans.type == 'restore' %}إرجاع{% else %}دفع مبلغ{% endif %}
+                            </span>
+                            <span class="text-sm opacity-60 block">{{ trans.date|date:"Y-m-d H:i" }}</span>
+                        </div>
+                        <div class="badge badge-outline">
+                            {% if trans.status == 'pending' %}معلق{% elif trans.status == 'approved' %}مقبول{% else %}مرفوض{% endif %}
+                        </div>
+                    </div>
+                </li>
+                {% empty %}
+                <li class="steps-step">لا يوجد نشاط حديث</li>
+                {% endfor %}
+            </ul>
+            
+            <div class="card-actions justify-center mt-4">
+                <a href="{% url 'inventory:rep_transactions' %}" class="btn btn-block btn-outline">سجل المعاملات الكامل</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

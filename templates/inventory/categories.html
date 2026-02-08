@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}الفئات{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-bold">الفئات</h1>
+        <label for="add-category-modal" class="btn btn-primary">
+            <i class="fa-solid fa-plus ml-2"></i> فئة جديدة
+        </label>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for category in categories %}
+        <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+            <div class="card-body">
+                <div class="flex justify-between items-start">
+                    <h2 class="card-title text-2xl">{{ category.name }}</h2>
+                    <div class="dropdown dropdown-end">
+                        <label tabindex="0" class="btn btn-ghost btn-circle btn-sm"><i class="fa-solid fa-ellipsis-vertical"></i></label>
+                        <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                            <li><a href="#" onclick="editCategory('{{ category.id }}', '{{ category.name }}', '{{ category.description|escapejs }}')"><i class="fa-solid fa-pen"></i> تعديل</a></li>
+                            <li>
+                                <form action="{% url 'inventory:delete_category' category.id %}" method="post" onsubmit="return confirm('حذف الفئة سيؤدي لحذف المنتجات المرتبطة بها أو تعيينها كـ (بدون فئة). هل أنت متأكد؟')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="text-error"><i class="fa-solid fa-trash"></i> حذف</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <p class="text-gray-500 min-h-[3rem]">{{ category.description|default:"لا يوجد وصف" }}</p>
+                
+                <div class="card-actions justify-end mt-4">
+                    <div class="badge badge-outline gap-2">
+                        <i class="fa-solid fa-box"></i> {{ category.products.count }} منتج
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center py-10 opacity-50">
+            <i class="fa-solid fa-folder-open text-6xl mb-4"></i>
+            <p class="text-xl">لا توجد فئات مضافة</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Add Modal -->
+<input type="checkbox" id="add-category-modal" class="modal-toggle" />
+<div class="modal" role="dialog">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">إضافة فئة جديدة</h3>
+        <form action="{% url 'inventory:add_category' %}" method="post">
+            {% csrf_token %}
+            <div class="form-control mb-4">
+                <label class="label"><span class="label-text">اسم الفئة</span></label>
+                {{ form.name }}
+            </div>
+            <div class="form-control mb-6">
+                <label class="label"><span class="label-text">الوصف</span></label>
+                {{ form.description }}
+            </div>
+            <div class="modal-action">
+                <label for="add-category-modal" class="btn">إلغاء</label>
+                <button type="submit" class="btn btn-primary">حفظ</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Modal (Simplified logic for demo) -->
+<input type="checkbox" id="edit-category-modal" class="modal-toggle" />
+<div class="modal" role="dialog">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">تعديل الفئة</h3>
+        <form id="edit-form" method="post">
+            {% csrf_token %}
+            <div class="form-control mb-4">
+                <label class="label"><span class="label-text">اسم الفئة</span></label>
+                <input type="text" name="name" id="edit-name" class="input input-bordered w-full" required>
+            </div>
+            <div class="form-control mb-6">
+                <label class="label"><span class="label-text">الوصف</span></label>
+                <textarea name="description" id="edit-desc" class="textarea textarea-bordered h-24"></textarea>
+            </div>
+            <div class="modal-action">
+                <label for="edit-category-modal" class="btn">إلغاء</label>
+                <button type="submit" class="btn btn-primary">تحديث</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function editCategory(id, name, desc) {
+    document.getElementById('edit-name').value = name;
+    document.getElementById('edit-desc').value = desc;
+    document.getElementById('edit-form').action = `/inventory/categories/${id}/edit/`;
+    document.getElementById('edit-category-modal').checked = true;
+}
+</script>
+{% endblock %}

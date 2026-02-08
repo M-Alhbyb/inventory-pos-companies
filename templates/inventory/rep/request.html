@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}طلب معاملة جديدة{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title text-2xl mb-6 justify-center">طلب معاملة جديدة</h2>
+            
+            <div class="tabs tabs-boxed justify-center mb-8">
+                <a class="tab tab-active transition-all" onclick="switchTab('products')">منتجات</a>
+                <a class="tab transition-all" onclick="switchTab('payment')">دفع مبلغ</a>
+            </div>
+            
+            <form method="post" id="transaction-form">
+                {% csrf_token %}
+                <input type="hidden" name="transaction_type" id="trans-type" value="take">
+                
+                <!-- Products Section -->
+                <div id="products-section">
+                    <div class="form-control w-full max-w-xs mx-auto mb-6">
+                        <label class="label"><span class="label-text">نوع العملية</span></label>
+                        <select class="select select-bordered" onchange="document.getElementById('trans-type').value = this.value">
+                            <option value="take">أخذ بضاعة (سحب)</option>
+                            <option value="restore">إرجاع بضاعة</option>
+                        </select>
+                    </div>
+                
+                    <div id="product-list" class="space-y-4 mb-6">
+                        <div class="flex gap-2 items-end product-row">
+                            <div class="form-control flex-1">
+                                <label class="label"><span class="label-text">المنتج</span></label>
+                                <select name="product" class="select select-bordered w-full">
+                                    <option value="" disabled selected>اختر منتجاً</option>
+                                    {% for product in products %}
+                                    <option value="{{ product.id }}">{{ product.name }} (المتوفر: {{ product.stock }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-control w-24">
+                                <label class="label"><span class="label-text">الكمية</span></label>
+                                <input type="number" name="quantity" class="input input-bordered w-full" min="1" value="1">
+                            </div>
+                            <button type="button" class="btn btn-square btn-outline btn-error" onclick="removeRow(this)" disabled>
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-ghost btn-block border-dashed border-2" onclick="addProductRow()">
+                        <i class="fa-solid fa-plus"></i> إضافة منتج آخر
+                    </button>
+                </div>
+                
+                <!-- Payment Section -->
+                <div id="payment-section" class="hidden">
+                    <div class="form-control w-full max-w-sm mx-auto">
+                        <label class="label"><span class="label-text">المبلغ المدفوع</span></label>
+                        <label class="input-group">
+                            <input type="number" name="amount" class="input input-bordered w-full text-center text-xl" step="0.01" min="0" placeholder="0.00">
+                            <span>ر.س</span>
+                        </label>
+                        <label class="label">
+                            <span class="label-text-alt text-warning">سيتم تسجيل طلب الدفع بانتظار الموافقة</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="card-actions justify-center mt-8 pt-4 border-t">
+                    <a href="{% url 'inventory:rep_dashboard' %}" class="btn btn-ghost">إلغاء</a>
+                    <button type="submit" class="btn btn-primary w-48">إرسال الطلب</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function switchTab(tab) {
+    const productsSection = document.getElementById('products-section');
+    const paymentSection = document.getElementById('payment-section');
+    const tabs = document.querySelectorAll('.tab');
+    const transTypeInput = document.getElementById('trans-type');
+    
+    if (tab === 'products') {
+        productsSection.classList.remove('hidden');
+        paymentSection.classList.add('hidden');
+        tabs[0].classList.add('tab-active');
+        tabs[1].classList.remove('tab-active');
+        transTypeInput.value = 'take'; // Default back to take
+    } else {
+        productsSection.classList.add('hidden');
+        paymentSection.classList.remove('hidden');
+        tabs[0].classList.remove('tab-active');
+        tabs[1].classList.add('tab-active');
+        transTypeInput.value = 'payment';
+    }
+}
+
+function addProductRow() {
+    const list = document.getElementById('product-list');
+    const firstRow = list.querySelector('.product-row');
+    const newRow = firstRow.cloneNode(true);
+    
+    // Reset values
+    newRow.querySelector('select').value = "";
+    newRow.querySelector('input').value = "1";
+    newRow.querySelector('button').disabled = false;
+    
+    list.appendChild(newRow);
+}
+
+function removeRow(btn) {
+    const rows = document.querySelectorAll('.product-row');
+    if (rows.length > 1) {
+        btn.closest('.product-row').remove();
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}إدارة المستخدمين{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-bold">إدارة المستخدمين</h1>
+        
+        {% if can_add_user %}
+            <a href="{% url 'accounts:add_user' %}" class="btn btn-primary">
+                <i class="fa-solid fa-plus ml-2"></i> إضافة مستخدم جديد
+            </a>
+        {% else %}
+            <div class="tooltip" data-tip="وصلت للحد الأقصى للمستخدمين في خطتك">
+                <button class="btn btn-disabled">إضافة مستخدم</button>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="alert alert-info shadow-sm">
+        <i class="fa-solid fa-info-circle"></i>
+        <span>عدد المستخدمين الحالي: {{ users.count|add:"1" }} / {{ user_limit }} (يشمل المدير)</span>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Self Card (Manager) -->
+        <div class="card bg-base-100 shadow-xl border-t-4 border-primary">
+            <div class="card-body">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="avatar placeholder">
+                        <div class="bg-primary text-primary-content rounded-full w-16">
+                            <span class="text-3xl">{{ user.username|make_list|first|upper }}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h2 class="card-title">{{ user.get_full_name|default:user.username }}</h2>
+                        <div class="badge badge-primary">مدير الشركة</div>
+                    </div>
+                </div>
+                <div class="text-sm space-y-2 opacity-70">
+                    <p><i class="fa-solid fa-envelope w-6"></i> {{ user.email }}</p>
+                    <p><i class="fa-solid fa-phone w-6"></i> {{ user.phone|default:"-" }}</p>
+                </div>
+                <div class="card-actions justify-end mt-4">
+                    <a href="{% url 'accounts:company_settings' %}" class="btn btn-sm btn-ghost">تعديل ملفي</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Other Users -->
+        {% for staff in users %}
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <div class="flex justify-between items-start">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="avatar placeholder">
+                            <div class="bg-neutral text-neutral-content rounded-full w-16">
+                                <span class="text-3xl">{{ staff.username|make_list|first|upper }}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <h2 class="card-title">{{ staff.get_full_name|default:staff.username }}</h2>
+                            <div class="badge badge-outline">{{ staff.get_role_display }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="dropdown dropdown-end">
+                        <div tabindex="0" role="button" class="btn btn-ghost btn-circle btn-sm">
+                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                        </div>
+                        <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                            <li><a href="{% url 'accounts:edit_user' staff.id %}"><i class="fa-solid fa-pen"></i> تعديل</a></li>
+                            <li>
+                                <form action="{% url 'accounts:delete_user' staff.id %}" method="post" onsubmit="return confirm('هل أنت متأكد من حذف هذا المستخدم؟');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="text-error"><i class="fa-solid fa-trash"></i> حذف</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="text-sm space-y-2 opacity-70">
+                    <p><i class="fa-solid fa-envelope w-6"></i> {{ staff.email }}</p>
+                    <p><i class="fa-solid fa-phone w-6"></i> {{ staff.phone|default:"-" }}</p>
+                    <p><i class="fa-solid fa-calendar w-6"></i> انضم: {{ staff.date_joined|date:"Y-m-d" }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+        <!-- Add New Placeholder -->
+        {% if can_add_user %}
+        <a href="{% url 'accounts:add_user' %}" class="card bg-base-100 shadow-xl border-dashed border-2 border-base-300 hover:border-primary hover:bg-base-200 transition-all flex items-center justify-center min-h-[200px] cursor-pointer group">
+            <div class="text-center">
+                <i class="fa-solid fa-plus-circle text-4xl text-base-content/30 group-hover:text-primary mb-2 transition-colors"></i>
+                <h3 class="font-bold text-base-content/50 group-hover:text-primary transition-colors">إضافة مستخدم جديد</h3>
+            </div>
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

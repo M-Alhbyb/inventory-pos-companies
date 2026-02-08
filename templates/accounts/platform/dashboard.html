@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}لوحة تحكم المنصة{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <h1 class="text-3xl font-bold">لوحة تحكم المنصة</h1>
+    
+    <!-- Stats Cards -->
+    <div class="stats shadow w-full">
+        <div class="stat place-items-center">
+            <div class="stat-title">الشركات المسجلة</div>
+            <div class="stat-value">{{ total_companies }}</div>
+            <div class="stat-desc">الإجمالي</div>
+        </div>
+        
+        <div class="stat place-items-center">
+            <div class="stat-title">اشتراكات نشطة</div>
+            <div class="stat-value text-success">{{ active_count }}</div>
+        </div>
+        
+        <div class="stat place-items-center">
+            <div class="stat-title">في الانتظار</div>
+            <div class="stat-value text-warning">{{ pending_count }}</div>
+            <div class="stat-desc">تحتاج للموافقة</div>
+        </div>
+        
+        <div class="stat place-items-center">
+            <div class="stat-title">إجمالي المستخدمين</div>
+            <div class="stat-value">{{ total_users }}</div>
+        </div>
+    </div>
+    
+    <!-- Recent Companies Table -->
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body p-0">
+            <h2 class="card-title p-6 pb-2">آخر الشركات المسجلة</h2>
+            <div class="overflow-x-auto">
+                <table class="table table-zebra w-full">
+                    <thead>
+                        <tr>
+                            <th>الشركة</th>
+                            <th>الخطة</th>
+                            <th>الحالة</th>
+                            <th>تاريخ التسجيل</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for company in companies|slice:":10" %}
+                        <tr>
+                            <td>
+                                <div class="font-bold">{{ company.name }}</div>
+                                <div class="text-sm opacity-50">{{ company.email }}</div>
+                            </td>
+                            <td>
+                                <div class="badge badge-outline">{{ company.subscription.plan.name }}</div>
+                            </td>
+                            <td>
+                                {% with status=company.subscription.status %}
+                                    {% if status == 'active' %}
+                                        <div class="badge badge-success gap-2">نشط</div>
+                                    {% elif status == 'pending' %}
+                                        <div class="badge badge-warning gap-2">معلق</div>
+                                    {% elif status == 'trial' %}
+                                        <div class="badge badge-info gap-2">تجريبي</div>
+                                    {% else %}
+                                        <div class="badge badge-error gap-2">{{ status }}</div>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            <td>{{ company.subscription.start_date|default:"-" }}</td>
+                            <td>
+                                {% if company.subscription.status == 'pending' %}
+                                    <form action="{% url 'accounts:approve_company' company.id %}" method="post">
+                                        {% csrf_token %}
+                                        <button class="btn btn-sm btn-success">تفعيل</button>
+                                    </form>
+                                {% endif %}
+                                <a href="#" class="btn btn-sm btn-ghost">التفاصيل</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4">لا توجد شركات مسجلة</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-actions justify-center p-4">
+                <a href="{% url 'accounts:platform_companies' %}" class="btn btn-sm btn-outline">عرض الكل</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

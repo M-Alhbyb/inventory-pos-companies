@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}تفاصيل المندوب{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center gap-4 mb-6">
+        <a href="{% url 'inventory:representatives' %}" class="btn btn-circle btn-ghost">
+            <i class="fa-solid fa-arrow-right"></i>
+        </a>
+        <div>
+            <h1 class="text-3xl font-bold">{{ representative.get_full_name|default:representative.username }}</h1>
+            <div class="text-sm opacity-50">تاريخ الانضمام: {{ representative.date_joined|date:"Y-m-d" }}</div>
+        </div>
+    </div>
+    
+    <!-- Stats Row -->
+    <div class="stats shadow w-full">
+        <div class="stat">
+            <div class="stat-figure text-primary">
+                <i class="fa-solid fa-boxes-stacked text-3xl"></i>
+            </div>
+            <div class="stat-title">منتجات في العهدة</div>
+            <div class="stat-value text-primary">{{ representative.products_count }}</div>
+        </div>
+        
+        <div class="stat">
+            <div class="stat-figure text-secondary">
+                <i class="fa-solid fa-arrow-right-arrow-left text-3xl"></i>
+            </div>
+            <div class="stat-title">إجمالي المعاملات</div>
+            <div class="stat-value text-secondary">{{ transactions.count }}</div>
+        </div>
+    </div>
+    
+    <!-- Transactions History -->
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title mb-4">سجل الحركات</h2>
+            
+            <div class="overflow-x-auto">
+                <table class="table table-zebra w-full">
+                    <thead>
+                        <tr>
+                            <th>نوع الحركة</th>
+                            <th>التفاصيل</th>
+                            <th>التاريخ</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trans in transactions %}
+                        <tr>
+                            <td>
+                                {% if trans.type == 'take' %}
+                                    <span class="badge badge-warning gap-2">أخذ بضاعة</span>
+                                {% elif trans.type == 'restore' %}
+                                    <span class="badge badge-info gap-2">إرجاع</span>
+                                {% else %}
+                                    <span class="badge badge-success gap-2">دفع</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if trans.type == 'payment' %}
+                                    <span class="font-bold text-success">{{ trans.amount }} ر.س</span>
+                                {% else %}
+                                    <div class="text-sm">
+                                        {% for item in trans.items.all|slice:":3" %}
+                                            <span class="badge badge-ghost badge-sm">{{ item.product.name }} ({{ item.quantity }})</span>
+                                        {% endfor %}
+                                        {% if trans.items.count > 3 %}
+                                            <span class="text-xs opacity-50">+{{ trans.items.count|add:"-3" }} المزيد</span>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td>{{ trans.date|date:"Y-m-d H:i" }}</td>
+                            <td>
+                                <div class="badge badge-outline">
+                                    {{ trans.get_status_display }}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4">لا توجد حركات مسجلة</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

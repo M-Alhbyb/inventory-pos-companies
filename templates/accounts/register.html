@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}تسجيل شركة جديدة - Inventory Pro{% endblock %}
+
+{% block auth_content %}
+<div class="card w-full max-w-4xl bg-base-100 shadow-xl my-8">
+    <div class="card-body">
+        <h2 class="card-title justify-center text-3xl font-bold text-primary mb-8">تسجيل شركة جديدة</h2>
+        
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Company Info -->
+                <div class="space-y-4">
+                    <h3 class="font-bold text-lg border-b pb-2">معلومات الشركة</h3>
+                    
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">اسم الشركة</span></label>
+                        {{ form.name }}
+                        {{ form.name.errors }}
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">البريد الإلكتروني</span></label>
+                        {{ form.email }}
+                        {{ form.email.errors }}
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">رقم الهاتف</span></label>
+                        {{ form.phone }}
+                        {{ form.phone.errors }}
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">العنوان</span></label>
+                        {{ form.address }}
+                        {{ form.address.errors }}
+                    </div>
+                </div>
+                
+                <!-- Manager Info -->
+                <div class="space-y-4">
+                    <h3 class="font-bold text-lg border-b pb-2">معلومات المدير</h3>
+                    
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">اسم المستخدم</span></label>
+                        {{ form.username }}
+                        {{ form.username.errors }}
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">كلمة المرور</span></label>
+                        {{ form.password1 }}
+                        {{ form.password1.errors }}
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">تأكيد كلمة المرور</span></label>
+                        {{ form.password2 }}
+                        {{ form.password2.errors }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Plan Selection -->
+            <div class="mt-8">
+                <h3 class="font-bold text-lg border-b pb-4 mb-4">اختر خطة الاشتراك</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {% for plan in plans %}
+                    <div class="card bg-base-200 border-2 hover:border-primary transition-all cursor-pointer" onclick="document.getElementById('plan_{{ plan.id }}').click()">
+                        <div class="card-body items-center text-center">
+                            <h2 class="card-title">{{ plan.name }}</h2>
+                            <p class="text-3xl font-bold my-4">{{ plan.price_monthly }} <span class="text-sm font-normal">ر.س/شهر</span></p>
+                            
+                            <ul class="text-sm space-y-2 mb-4">
+                                <li><i class="fa-solid fa-users text-success"></i> {{ plan.max_users }} مستخدمين</li>
+                                <li><i class="fa-solid fa-box text-success"></i> {{ plan.max_products }} منتج</li>
+                                {% if plan.has_inventory %}<li><i class="fa-solid fa-check text-success"></i> إدارة المخزون</li>{% endif %}
+                                {% if plan.has_pos %}<li><i class="fa-solid fa-check text-success"></i> نقاط البيع (POS)</li>{% endif %}
+                            </ul>
+                            
+                            <div class="card-actions">
+                                <label class="label cursor-pointer gap-2">
+                                    <input type="radio" name="plan" value="{{ plan.id }}" id="plan_{{ plan.id }}" class="radio radio-primary" {% if forloop.first %}checked{% endif %} />
+                                    <span class="label-text font-bold">اختيار</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {{ form.plan.errors }}
+            </div>
+            
+            {% if form.non_field_errors %}
+                <div class="alert alert-error">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+            
+            <div class="card-actions justify-end mt-8">
+                <a href="{% url 'accounts:login' %}" class="btn btn-ghost">لدي حساب بالفعل</a>
+                <button type="submit" class="btn btn-primary btn-lg">تسجيل الشركة</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

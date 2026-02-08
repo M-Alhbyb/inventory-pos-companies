@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}تسجيل الخروج{% endblock %}
+
+{% block auth_content %}
+<div class="card w-96 bg-base-100 shadow-xl">
+    <div class="card-body text-center">
+        <h2 class="text-2xl font-bold mb-4">تسجيل الخروج</h2>
+        <p class="mb-6">هل أنت متأكد أنك تريد تسجيل الخروج؟</p>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="flex gap-4 justify-center">
+                <a href="javascript:history.back()" class="btn btn-ghost">إلغاء</a>
+                <button type="submit" class="btn btn-error">نعم، خروج</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

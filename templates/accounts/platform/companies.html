@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}الشركات المسجلة{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <h1 class="text-3xl font-bold">الشركات المسجلة</h1>
+    
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <div class="overflow-x-auto">
+                <table class="table w-full">
+                    <thead>
+                        <tr>
+                            <th>الشركة</th>
+                            <th>الخطة</th>
+                            <th>المستخدمين / المنتجات</th>
+                            <th>حالة الاشتراك</th>
+                            <th>تاريخ التسجيل</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for company in companies %}
+                        <tr>
+                            <td>
+                                <div class="font-bold">{{ company.name }}</div>
+                                <div class="text-xs opacity-50">{{ company.phone }}</div>
+                            </td>
+                            <td>{{ company.subscription.plan.name }}</td>
+                            <td>
+                                <div class="flex flex-col gap-1 text-xs">
+                                    <span><i class="fa-solid fa-users"></i> {{ company.users.count }}</span>
+                                    <span><i class="fa-solid fa-box"></i> {{ company.products.count }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                {% with status=company.subscription.status %}
+                                <div class="badge {% if status == 'active' %}badge-success{% elif status == 'pending' %}badge-warning{% elif status == 'expired' %}badge-error{% else %}badge-ghost{% endif %}">
+                                    {{ status }}
+                                </div>
+                                {% endwith %}
+                            </td>
+                            <td>{{ company.subscription.created_at|date:"Y-m-d" }}</td>
+                            <td>
+                                {% if company.subscription.status == 'pending' %}
+                                    <form action="{% url 'accounts:approve_company' company.id %}" method="post">
+                                        {% csrf_token %}
+                                        <button class="btn btn-sm btn-success">تفعيل</button>
+                                    </form>
+                                {% endif %}
+                                <a href="#" class="btn btn-sm btn-ghost btn-circle">
+                                    <i class="fa-solid fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-6">لا توجد شركات</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
