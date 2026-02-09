@@ -8,7 +8,7 @@ from django.http import HttpResponseForbidden
 from functools import wraps
 
 from .models import User, Company, CompanySubscription, SubscriptionPlan
-from .forms import CompanyRegistrationForm, CustomAuthenticationForm, UserForm, CompanySettingsForm
+from .forms import CompanyRegistrationForm, CustomAuthenticationForm, UserForm, CompanySettingsForm, SubscriptionPlanForm
 
 
 # =============================================================================
@@ -243,6 +243,57 @@ def platform_plans(request):
     """Manage subscription plans."""
     plans = SubscriptionPlan.objects.all()
     return render(request, 'accounts/platform/plans.html', {'plans': plans})
+
+
+@platform_manager_required
+def add_plan(request):
+    """Add a new subscription plan."""
+    if request.method == 'POST':
+        form = SubscriptionPlanForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'تم إضافة خطة الاشتراك بنجاح!')
+            return redirect('accounts:platform_plans')
+    else:
+        form = SubscriptionPlanForm()
+    
+    return render(request, 'accounts/platform/add_plan.html', {'form': form})
+
+
+@platform_manager_required
+def edit_plan(request, plan_id):
+    """Edit an existing subscription plan."""
+    plan = get_object_or_404(SubscriptionPlan, id=plan_id)
+    
+    if request.method == 'POST':
+        form = SubscriptionPlanForm(request.POST, instance=plan)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'تم تحديث خطة الاشتراك بنجاح!')
+            return redirect('accounts:platform_plans')
+    else:
+        form = SubscriptionPlanForm(instance=plan)
+    
+    return render(request, 'accounts/platform/edit_plan.html', {
+        'form': form,
+        'plan': plan
+    })
+
+
+@platform_manager_required
+def delete_plan(request, plan_id):
+    """Delete a subscription plan if unused."""
+    if request.method == 'POST':
+        plan = get_object_or_404(SubscriptionPlan, id=plan_id)
+        
+        # Check for active subscriptions
+        if plan.subscriptions.exists():
+            messages.error(request, 'لا يمكن حذف هذه الخطة لأنها مرتبطة باشتراكات شركات.')
+        else:
+            plan.delete()
+            messages.success(request, 'تم حذف الخطة بنجاح!')
+            
+    return redirect('accounts:platform_plans')
 
 
 # =============================================================================

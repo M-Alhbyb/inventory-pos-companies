@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}إضافة خطة اشتراك جديدة{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold">إضافة خطة اشتراك جديدة</h1>
+        <a href="{% url 'accounts:platform_plans' %}" class="btn btn-ghost btn-sm">
+            <i class="fa-solid fa-arrow-right ml-2"></i> عودة
+        </a>
+    </div>
+
+    <div class="card bg-base-100 shadow-xl border">
+        <div class="card-body">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-bold">معلومات الخطة</span>
+                    </label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                    <label class="label">
+                        <span class="label-text-alt text-error">{{ form.name.errors.0 }}</span>
+                    </label>
+                    {% endif %}
+                </div>
+
+                <div class="form-control w-full">
+                    {{ form.description }}
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control w-full">
+                        <label class="label">
+                            <span class="label-text">الحدود</span>
+                        </label>
+                        <div class="input-group">
+                            <span>مستخدم</span>
+                            {{ form.max_users }}
+                        </div>
+                    </div>
+                    <div class="form-control w-full">
+                        <label class="label">
+                            <span class="label-text">&nbsp;</span>
+                        </label>
+                        <div class="input-group">
+                            <span>منتج</span>
+                            {{ form.max_products }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control w-full">
+                        <label class="label">
+                            <span class="label-text">التسعير (ر.س)</span>
+                        </label>
+                        <div class="input-group">
+                            <span>شهري</span>
+                            {{ form.price_monthly }}
+                        </div>
+                    </div>
+                    <div class="form-control w-full">
+                        <label class="label">
+                            <span class="label-text">&nbsp;</span>
+                        </label>
+                        <div class="input-group">
+                            <span>سنوي</span>
+                            {{ form.price_yearly }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text">الفترة التجريبية (بالأيام)</span>
+                    </label>
+                    {{ form.trial_days }}
+                </div>
+
+                <div class="divider">المميزات والإعدادات</div>
+
+                <div class="flex flex-col gap-4">
+                    <label class="label cursor-pointer justify-start gap-4">
+                        {{ form.has_inventory }}
+                        <span class="label-text">تفعيل نظام المخزون</span>
+                    </label>
+
+                    <label class="label cursor-pointer justify-start gap-4">
+                        {{ form.has_pos }}
+                        <span class="label-text">تفعيل نظام نقاط البيع</span>
+                    </label>
+
+                    <label class="label cursor-pointer justify-start gap-4">
+                        {{ form.is_active }}
+                        <span class="label-text">تفعيل الخطة (قابلة للاشتراك)</span>
+                    </label>
+                </div>
+
+                <div class="card-actions justify-end mt-6">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-plus ml-2"></i> إضافة الخطة
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

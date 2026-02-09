@@ -68,8 +68,7 @@ urlpatterns = [
     path('pos/', include('pos.urls')),
     # path('reports/', include('reports.urls')),  # TODO: Add reports
     
-    # Legacy base app (to be removed after migration)
-    path('legacy/', include('base.urls')),
+
 ]
 
 # Serve media files in development

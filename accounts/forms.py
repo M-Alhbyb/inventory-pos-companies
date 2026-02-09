@@ -150,7 +150,7 @@ class CompanySettingsForm(forms.ModelForm):
     
     class Meta:
         model = Company
-        fields = ['name', 'email', 'phone', 'address', 'logo', 'tax_rate', 'tax_name']
+        fields = ['name', 'email', 'phone', 'address', 'logo', 'tax_rate', 'tax_name', 'tax_number', 'tax_enabled']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'input input-bordered w-full'
@@ -174,5 +174,66 @@ class CompanySettingsForm(forms.ModelForm):
             'tax_name': forms.TextInput(attrs={
                 'class': 'input input-bordered w-full',
                 'placeholder': 'مثال: VAT, ضريبة القيمة المضافة'
+            }),
+            'tax_number': forms.TextInput(attrs={
+                'class': 'input input-bordered w-full',
+                'placeholder': 'الرقم الضريبي'
+            }),
+            'tax_enabled': forms.CheckboxInput(attrs={
+                'class': 'toggle toggle-success'
+            }),
+        }
+
+
+class SubscriptionPlanForm(forms.ModelForm):
+    """Form for creating and editing subscription plans."""
+    
+    class Meta:
+        model = SubscriptionPlan
+        fields = [
+            'name', 'description', 'max_users', 'max_products',
+            'has_inventory', 'has_pos', 'price_monthly', 'price_yearly',
+            'trial_days', 'is_active'
+        ]
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'input input-bordered w-full',
+                'placeholder': 'اسم الخطة'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'textarea textarea-bordered w-full',
+                'rows': 3,
+                'placeholder': 'وصف الخطة ومميزاتها'
+            }),
+            'max_users': forms.NumberInput(attrs={
+                'class': 'input input-bordered w-full',
+                'min': '1'
+            }),
+            'max_products': forms.NumberInput(attrs={
+                'class': 'input input-bordered w-full',
+                'min': '1'
+            }),
+            'price_monthly': forms.NumberInput(attrs={
+                'class': 'input input-bordered w-full',
+                'step': '0.01',
+                'min': '0'
+            }),
+            'price_yearly': forms.NumberInput(attrs={
+                'class': 'input input-bordered w-full',
+                'step': '0.01',
+                'min': '0'
+            }),
+            'trial_days': forms.NumberInput(attrs={
+                'class': 'input input-bordered w-full',
+                'min': '0'
+            }),
+            'has_inventory': forms.CheckboxInput(attrs={
+                'class': 'checkbox checkbox-primary'
+            }),
+            'has_pos': forms.CheckboxInput(attrs={
+                'class': 'checkbox checkbox-primary'
+            }),
+            'is_active': forms.CheckboxInput(attrs={
+                'class': 'toggle toggle-success'
             }),
         }

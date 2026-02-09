@@ -20,6 +20,9 @@ urlpatterns = [
     path('platform/companies/', views.platform_companies, name='platform_companies'),
     path('platform/companies/<int:company_id>/approve/', views.approve_company, name='approve_company'),
     path('platform/plans/', views.platform_plans, name='platform_plans'),
+    path('platform/plans/add/', views.add_plan, name='add_plan'),
+    path('platform/plans/<int:plan_id>/edit/', views.edit_plan, name='edit_plan'),
+    path('platform/plans/<int:plan_id>/delete/', views.delete_plan, name='delete_plan'),
     
     # Company Manager
     path('dashboard/', views.company_dashboard, name='company_dashboard'),

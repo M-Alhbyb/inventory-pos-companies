@@ -83,6 +83,14 @@ class Company(models.Model):
         max_length=50, default='VAT', blank=True,
         verbose_name='اسم الضريبة'
     )
+    tax_number = models.CharField(
+        max_length=50, blank=True,
+        verbose_name='الرقم الضريبي'
+    )
+    tax_enabled = models.BooleanField(
+        default=True,
+        verbose_name='تفعيل الضريبة'
+    )
     # PASHA : add company VAT number to print it in cashier receipt 
     
     is_active = models.BooleanField(default=True, verbose_name='نشط')
