@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Auto-hide alerts after 5 seconds
-  const alerts = document.querySelectorAll(".alert");
+  const alerts = document.querySelectorAll(".auto-hide");
   if (alerts.length > 0) {
     setTimeout(() => {
       alerts.forEach((alert) => {
