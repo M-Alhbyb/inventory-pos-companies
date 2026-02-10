@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Initialize theme from localStorage
-  const themeController = document.querySelector(".theme-controller");
+  const themeController = document.querySelector(".theme-switch");
   if (themeController) {
     const currentTheme = localStorage.getItem("theme") || "light";
     document.documentElement.setAttribute("data-theme", currentTheme);
