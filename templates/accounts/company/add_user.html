@@ -13,8 +13,17 @@
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="form-control">
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-error shadow-lg mb-4">
+                                <div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    <span>{{ form.non_field_errors }}</span>
+                                </div>
+                            </div>
+                        {% endif %}
                         <label class="label"><span class="label-text">الدور الوظيفي</span></label>
                         {{ form.role }}
+                        {{ form.role.errors }}
                     </div>
                 </div>
                 
@@ -43,21 +52,25 @@
                     <div class="form-control">
                         <label class="label"><span class="label-text">الاسم الأول</span></label>
                         {{ form.first_name }}
+                        {{ form.first_name.errors }}
                     </div>
                     
                     <div class="form-control">
                         <label class="label"><span class="label-text">الاسم الأخير</span></label>
                         {{ form.last_name }}
+                        {{ form.last_name.errors }}
                     </div>
                     
                     <div class="form-control">
                         <label class="label"><span class="label-text">البريد الإلكتروني</span></label>
                         {{ form.email }}
+                        {{ form.email.errors }}
                     </div>
                     
                     <div class="form-control">
                         <label class="label"><span class="label-text">رقم الهاتف</span></label>
                         {{ form.phone }}
+                        {{ form.phone.errors }}
                     </div>
                 </div>
                 
